@@ -12,7 +12,7 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace AlgorithmExtensions.Scoring
 {
-    public class AccuracyScoringFunction<T> : ScoringFunctionBase<T>, IScoringFunction where T : class, new()
+    public class AccuracyScoringFunction<Tout> : NumericScoringFunctionBase<Tout>, IScoringFunction where Tout : class, new()
     {
         private MLContext _mlContext;
         public AccuracyScoringFunction(MLContext context)
@@ -30,16 +30,12 @@ namespace AlgorithmExtensions.Scoring
             var predictedProperty = GetPredictionProperty();
             var goldProperty = GetGoldProperty();
 
-            if ((predictedProperty.PropertyType != typeof(int) && predictedProperty.PropertyType != typeof(bool)) || (goldProperty.PropertyType != typeof(int) && goldProperty.PropertyType != typeof(bool)))
-            {
-                throw new PropertyTypeException($"Properties with attributes {typeof(GoldAttribute)} or {typeof(PredictionAttribute)} should be of type {typeof(int)} or {typeof(bool)}");
-            }
+            CheckIfPropertyTypeIsNumber(predictedProperty);
+            CheckIfPropertyTypeIsNumber(goldProperty);
 
-            var predictedEnumerator = _mlContext.Data.CreateEnumerable<T>(predicted, true);
+            var predictedEnumerator = _mlContext.Data.CreateEnumerable<Tout>(predicted, true);
             var correctValues = 0f;
             var allValues = 0f;
-
-            //var aa = predictedEnumerator.ToArray();
 
             foreach (var row in predictedEnumerator)
             {
@@ -57,15 +53,6 @@ namespace AlgorithmExtensions.Scoring
             }
 
             return correctValues / allValues;
-        }
-
-        private int UnpackPropertyValue(object value)
-        {
-            if (value is int intVal)
-            {
-                return intVal;
-            }
-            return ((bool)value).ToInt();
         }
     }
 }
