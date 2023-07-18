@@ -11,18 +11,18 @@ namespace AlgorithmExtensions.Hyperalgorithms
     public class PipelineItem
     {
         public Delegate CreationalDelegate { get; set; }
-        public object Catalog { get; set; }
         public string Name { get; set; }
+        public object[] DefaultParameters { get; set; }
         public PipelineItem()
         {
             
         }
 
-        public PipelineItem(Delegate creationalDelegate, object catalog, string name = "")
+        public PipelineItem(Delegate creationalDelegate, string name = "", object[] defaultParameters = null)
         {
             CreationalDelegate = creationalDelegate;
-            Catalog = catalog;
             Name = name;
+            DefaultParameters = defaultParameters;
         }
     }
 }

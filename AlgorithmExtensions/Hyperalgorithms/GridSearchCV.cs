@@ -63,6 +63,10 @@ namespace AlgorithmExtensions.Hyperalgorithms
 
         public IEnumerable<List<int>> GenerateIndexCombinations(int[] domain)
         {
+            if (domain.Length == 0)
+            {
+                yield break;
+            }
             if (domain.Length == 1)
             {
                 for (int i = 0; i < domain[0]; i++)
@@ -84,6 +88,7 @@ namespace AlgorithmExtensions.Hyperalgorithms
 
         public IEnumerable<IEstimator<ITransformer>> GeneratePipelinesFromParameters()
         {
+            //TODO: this could be an empty enumerable
             var parameterDictionaries = GenerateParameterCombinations();
             foreach (var parameterCollection in parameterDictionaries)
             {
@@ -97,9 +102,10 @@ namespace AlgorithmExtensions.Hyperalgorithms
             var pipelines = GenerateParameterCombinations().ToArray();
             var tasks = new Task<float>[pipelines.Length];
 
-            for (int i = 0; i <= pipelines.Length; i++)
+            for (int i = 0; i < pipelines.Length; i++)
             {
-                tasks[i] = Task.Run(() => CrossValidateModel(pipelines[i], data));
+                var pipeline = pipelines[i];
+                tasks[i] = Task.Run(() => CrossValidateModel(pipeline, data));
             }
 
             var results = await Task.WhenAll(tasks);
@@ -123,7 +129,7 @@ namespace AlgorithmExtensions.Hyperalgorithms
                 IEstimator<ITransformer> instance = GenerateEstimatorChain(parameters);
                 var trainedInstance = instance.Fit(split.TrainSet);
                 var transformedData = trainedInstance.Transform(split.TestSet);
-                results.Add(_scoringFunction.Score(split.TrainSet, transformedData));
+                results.Add(_scoringFunction.Score(transformedData));
             }
 
             var sum = results.Sum();
@@ -131,12 +137,12 @@ namespace AlgorithmExtensions.Hyperalgorithms
         }
 
 
-        private EstimatorChain<ITransformer> GenerateEstimatorChain(Dictionary<string, string> parameterCollection)
+        public EstimatorChain<ITransformer> GenerateEstimatorChain(Dictionary<string, string> parameterCollection)
         {
             var estimator = new EstimatorChain<ITransformer>();
             foreach (var item in _template.Delegates)
             {
-                estimator.Append(GenerateInstanceFromParameters(item, parameterCollection));
+                estimator = estimator.Append(GenerateInstanceFromParameters(item, parameterCollection));
             }
             return estimator;
         }
@@ -155,8 +161,30 @@ namespace AlgorithmExtensions.Hyperalgorithms
                 throw new IncorrectCreationalDelegateException(optionTypesCount > 1 ? "There are multiple option parameters in creational delegate" : "There is no option parameter in creational delegate");
             }
 
-            var optionsType = optionTypes.First().ParameterType;
-            var options = (TrainerInputBase)Activator.CreateInstance(optionsType);
+            IEstimator<ITransformer> estimator = null;
+
+            if (optionTypesCount == 1)
+            {
+                var options = GenerateAndSetOptions(optionTypes.First().ParameterType, pipelineItem, parameterCollection);
+                estimator = MakeInstanceOfEstimator(creationalDelegate, options);
+            }
+            else
+            {
+                try
+                {
+                    estimator = (IEstimator<ITransformer>)creationalDelegate.DynamicInvoke(pipelineItem.DefaultParameters);
+                }
+                catch
+                {
+                    throw new IncorrectCreationalDelegateException($"Creational delegate with name {pipelineItem.Name} did not create any type of estimator or default parameters given were incorrect.");
+                }
+            }
+            return estimator;
+        }
+
+        private TrainerInputBase GenerateAndSetOptions(Type optionType, PipelineItem pipelineItem, Dictionary<string, string> parameterCollection)
+        {
+            var options = (TrainerInputBase)Activator.CreateInstance(optionType);
 
             if (parameterCollection.ContainsKey(pipelineItem.Name))
             {
@@ -168,7 +196,7 @@ namespace AlgorithmExtensions.Hyperalgorithms
                 SetPropertyOfOptions(options, parameterEntry[0], parameterEntry[1]);
             }
 
-            return MakeInstanceOfEstimator(creationalDelegate, options);
+            return options;
         }
 
         private IEstimator<ITransformer> MakeInstanceOfEstimator(Delegate creationalDelegate, TrainerInputBase options)

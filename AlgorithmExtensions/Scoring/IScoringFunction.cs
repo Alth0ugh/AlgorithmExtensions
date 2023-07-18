@@ -9,6 +9,6 @@ namespace AlgorithmExtensions.Scoring
 {
     public interface IScoringFunction
     {
-        float Score(IDataView gold, IDataView predicted);
+        float Score(IDataView predicted);
     }
 }

@@ -14,15 +14,15 @@ namespace AlgorithmExtensions.Hyperalgorithms
     {
         public List<PipelineItem> Delegates { get; } = new List<PipelineItem>();
 
-        public void Add(Delegate creationalDelegate, CatalogInstantiatorBase catalog, string name = "")
+        public void Add(Delegate creationalDelegate, string name = "")
         {
-            var item = new PipelineItem(creationalDelegate, catalog, name);
+            var item = new PipelineItem(creationalDelegate, name);
             Delegates.Add(item);
         }
 
-        public void Add(Delegate creationalDelegate, TransformsCatalog catalog, string name = "")
+        public void Add(Delegate creationalDelegate, string name = "", params object[] defaultParams)
         {
-            var item = new PipelineItem(creationalDelegate, catalog, name);
+            var item = new PipelineItem(creationalDelegate, name, defaultParams);
             Delegates.Add(item);
         }
     }

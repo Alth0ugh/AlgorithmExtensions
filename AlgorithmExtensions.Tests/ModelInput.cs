@@ -1,4 +1,5 @@
-﻿using Microsoft.ML.Data;
+﻿using AlgorithmExtensions.Attributes;
+using Microsoft.ML.Data;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -99,6 +100,7 @@ namespace AlgorithmExtensions.Tests
         [ColumnName("Amount"), LoadColumn(29)]
         public float Amount { get; set; }
 
+        [Gold]
         [ColumnName("Label"), LoadColumn(30)]
         public bool Class { get; set; }
     }
