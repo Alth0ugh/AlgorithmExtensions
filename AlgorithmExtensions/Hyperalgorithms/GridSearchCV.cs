@@ -185,6 +185,12 @@ namespace AlgorithmExtensions.Hyperalgorithms
         private TrainerInputBase GenerateAndSetOptions(Type optionType, PipelineItem pipelineItem, Dictionary<string, string> parameterCollection)
         {
             var options = (TrainerInputBase)Activator.CreateInstance(optionType);
+            var defaultOptions = pipelineItem.DefaultOptions;
+
+            if (defaultOptions != null)
+            {
+                SetDefaultOptions(options, defaultOptions);
+            }
 
             if (parameterCollection.ContainsKey(pipelineItem.Name))
             {
@@ -197,6 +203,20 @@ namespace AlgorithmExtensions.Hyperalgorithms
             }
 
             return options;
+        }
+
+        private void SetDefaultOptions(TrainerInputBase options, TrainerInputBase defaultOptions)
+        {
+            if (options.GetType() != defaultOptions.GetType())
+            {
+                throw new OptionTypeMismatchException("Model option type and supplied default option type does not match", options.GetType(), defaultOptions.GetType());
+            }
+
+            var properties = options.GetType().GetProperties();
+            foreach (var property in properties )
+            {
+                property.SetValue(options, property.GetValue(defaultOptions));
+            }
         }
 
         private IEstimator<ITransformer> MakeInstanceOfEstimator(Delegate creationalDelegate, TrainerInputBase options)

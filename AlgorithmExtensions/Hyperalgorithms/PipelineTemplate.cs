@@ -20,9 +20,15 @@ namespace AlgorithmExtensions.Hyperalgorithms
             Delegates.Add(item);
         }
 
-        public void Add(Delegate creationalDelegate, string name = "", params object[] defaultParams)
+        public void Add(Delegate creationalDelegate, string name = "", params object[] functionParameters)
         {
-            var item = new PipelineItem(creationalDelegate, name, defaultParams);
+            var item = new PipelineItem(creationalDelegate, name, functionParameters);
+            Delegates.Add(item);
+        }
+
+        public void Add(Delegate creationalDelegate, string name = "", TrainerInputBase defaultOptions = null)
+        {
+            var item = new PipelineItem(creationalDelegate, name, defaultOptions: defaultOptions);
             Delegates.Add(item);
         }
     }
