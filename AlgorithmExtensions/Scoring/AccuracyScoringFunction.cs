@@ -1,5 +1,4 @@
 ﻿using Microsoft.ML;
-using System.Diagnostics;
 
 namespace AlgorithmExtensions.Scoring
 {
@@ -36,10 +35,6 @@ namespace AlgorithmExtensions.Scoring
                 if (goldValue == predictedValue)
                 {
                     correctValues++;
-                }
-                else
-                {
-                    Debug.WriteLine("");
                 }
             }
 

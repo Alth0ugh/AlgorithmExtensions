@@ -170,9 +170,9 @@ namespace AlgorithmExtensions.Tests
                 .Append(mlContext.Transforms.Concatenate("Features", "TitleFeaturized", "DescriptionFeaturized"));
 
             var trainingPipeline = pipeline.Append(mlContext.MulticlassClassification.Trainers.SdcaMaximumEntropy("Label", "Features"));
-            var transformer = trainingPipeline.Fit(data);
-            var newData = transformer.Transform(data);
-            //var metrics = mlContext.MulticlassClassification.CrossValidate(data, trainingPipeline);
+            //var transformer = trainingPipeline.Fit(data);
+            //var newData = transformer.Transform(data);
+            var metrics = mlContext.MulticlassClassification.CrossValidate(data, trainingPipeline);
 
             Debug.WriteLine("");
         }
@@ -196,13 +196,12 @@ namespace AlgorithmExtensions.Tests
             pipelineTemplate.Add(model, "model");
 
             var parameters = new Dictionary<string, string[]>();
-            parameters.Add("model", new string[] { "MaximumNumberOfIterations_7" });
+            parameters.Add("model", new string[] { "MaximumNumberOfIterations_1" });
 
+            var f_score = new FScoringFunctionMulticlass<GitHubIssueOutput>(mlContext, 22, true);
 
-            var gridSearch = new GridSearchCV<GitHubIssueOutput>(mlContext, pipelineTemplate, parameters, new FScoringFunctionMulticlass<GitHubIssueOutput>(mlContext, 22, true));
+            var gridSearch = new GridSearchCV<GitHubIssueOutput>(mlContext, pipelineTemplate, parameters, new AccuracyScoringFunction<GitHubIssueOutput>(mlContext));
             await gridSearch.Fit(data);
-
-
         }
     }
 }
