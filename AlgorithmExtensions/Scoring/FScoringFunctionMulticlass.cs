@@ -1,4 +1,5 @@
 ﻿using Microsoft.ML;
+using AlgorithmExtensions.Extensions;
 
 namespace AlgorithmExtensions.Scoring
 {
@@ -65,18 +66,9 @@ namespace AlgorithmExtensions.Scoring
 
         private float CalculateMicroAveragedFScore(FMetricsForClass[] fMetrics)
         {
-            var tp = 0;
-            var fp = 0;
-            var fn = 0;
+            var sum = fMetrics.Sum();
 
-            for (int i = 0; i < fMetrics.Length; i++)
-            {
-                tp += fMetrics[i].TP;
-                fp += fMetrics[i].FP;
-                fn += fMetrics[i].FN;
-            }
-
-            return CalculateFScore(tp, fp, fn);
+            return CalculateFScore(sum.TP, sum.FP, sum.FN);
         }
 
         private float CalculateMacroAveragedFScore(FMetricsForClass[] fMetrics)
