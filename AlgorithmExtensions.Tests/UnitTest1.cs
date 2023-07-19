@@ -186,6 +186,7 @@ namespace AlgorithmExtensions.Tests
             var pipelineTemplate = new PipelineTemplate();
 
             var mapValToKey = new Func<string, string, int, KeyOrdinality, bool, IDataView, ValueToKeyMappingEstimator>(mlContext.Transforms.Conversion.MapValueToKey);
+
             pipelineTemplate.Add(mapValToKey, "key", new object[] { "Label", "Area", 1000000, KeyOrdinality.ByOccurrence, false, null });
             var featurizeText = new Func<string, string, TextFeaturizingEstimator>(mlContext.Transforms.Text.FeaturizeText);
             pipelineTemplate.Add(featurizeText, "featurize1", new object[] { "TitleFeaturized", "Title" });
@@ -196,12 +197,15 @@ namespace AlgorithmExtensions.Tests
             pipelineTemplate.Add(model, "model");
 
             var parameters = new Dictionary<string, string[]>();
-            parameters.Add("model", new string[] { "MaximumNumberOfIterations_1" });
+            parameters.Add("model", new string[] { $"{nameof(SdcaMaximumEntropyMulticlassTrainer.Options.MaximumNumberOfIterations)}_1",
+            $"{nameof(SdcaMaximumEntropyMulticlassTrainer.Options.MaximumNumberOfIterations)}_10" });
 
             var f_score = new FScoringFunctionMulticlass<GitHubIssueOutput>(mlContext, 22, true);
 
             var gridSearch = new GridSearchCV<GitHubIssueOutput>(mlContext, pipelineTemplate, parameters, new AccuracyScoringFunction<GitHubIssueOutput>(mlContext));
             await gridSearch.Fit(data);
+
+            Debug.WriteLine("");
         }
     }
 }

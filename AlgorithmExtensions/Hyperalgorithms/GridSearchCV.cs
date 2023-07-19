@@ -17,6 +17,7 @@ namespace AlgorithmExtensions.Hyperalgorithms
         private MLContext _mlContext;
         private IEstimator<ITransformer>[] _estimators = null;
         public IEstimator<ITransformer> BestEstimator { get; set; }
+        public Dictionary<string, string> BestParameters { get; set; }
 
         public GridSearchCV(MLContext mlContext, PipelineTemplate template, Dictionary<string, string[]> parameters, IScoringFunction scoringFunction = null, int numberOfJobs = -1, bool refit = true, int crossValidationSplits = 5)
         {
@@ -110,6 +111,7 @@ namespace AlgorithmExtensions.Hyperalgorithms
             }
 
             BestEstimator = GenerateEstimatorChain(pipelines[bestEstimator]);
+            BestParameters = pipelines[bestEstimator];
         }
 
         private float CrossValidateModel(Dictionary<string, string> parameters, IDataView data)
