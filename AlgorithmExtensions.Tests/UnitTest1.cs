@@ -196,7 +196,7 @@ namespace AlgorithmExtensions.Tests
             pipelineTemplate.Add(model, "model");
 
             var parameters = new Dictionary<string, string[]>();
-            parameters.Add("model", new string[] { "ConvergenceTolerance_0,1" });
+            parameters.Add("model", new string[] { "MaximumNumberOfIterations_7" });
 
 
             var gridSearch = new GridSearchCV<GitHubIssueOutput>(mlContext, pipelineTemplate, parameters, new FScoringFunctionMulticlass<GitHubIssueOutput>(mlContext, 22, true));

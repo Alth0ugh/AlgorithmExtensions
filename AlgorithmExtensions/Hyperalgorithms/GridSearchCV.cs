@@ -240,6 +240,10 @@ namespace AlgorithmExtensions.Hyperalgorithms
 
             var setType = property.First().FieldType;
             object convertedParameter = null;
+            if (Nullable.GetUnderlyingType(setType) != null)
+            {
+                setType = Nullable.GetUnderlyingType(setType);
+            }
             
             try
             {
