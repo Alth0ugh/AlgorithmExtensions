@@ -4,12 +4,15 @@ using Microsoft.ML;
 using Microsoft.ML.Data;
 using Microsoft.ML.Trainers;
 using Microsoft.ML.Trainers.LightGbm;
+using Microsoft.ML.Transforms;
 using Microsoft.ML.Transforms.Text;
 using Microsoft.ML.Vision;
 using NumSharp.Extensions;
 using System.Diagnostics;
+using System.Numerics;
 using Xunit.Sdk;
 using static Microsoft.ML.TrainCatalogBase;
+using static Microsoft.ML.Transforms.ValueToKeyMappingEstimator;
 
 namespace AlgorithmExtensions.Tests
 {
@@ -74,7 +77,7 @@ namespace AlgorithmExtensions.Tests
             var a = mlContext.Data.TrainTestSplit(dataView, 0.2);
 
             var dataPipeline = mlContext.Transforms.Text.FeaturizeText("Features", "Text")
-                .Append(mlContext.BinaryClassification.Trainers.LinearSvm());
+                .Append(mlContext.BinaryClassification.Trainers.LinearSvm(numberOfIterations: 1));
 
             var transformer = dataPipeline.Fit(a.TrainSet);
             var prediction = transformer.Transform(a.TestSet);
@@ -102,7 +105,7 @@ namespace AlgorithmExtensions.Tests
             var parameters = new Dictionary<string, string[]>();
             parameters.Add("svm", new string[] { "NumberOfIterations_1" });
 
-            var gridSearch = new GridSearchCV<YelOutput>(mlContext, pipelineTemplate, parameters, new AccuracyScoringFunction<YelOutput>(mlContext));
+            var gridSearch = new GridSearchCV<YelOutput>(mlContext, pipelineTemplate, parameters, new FScoringFunctionBinary<YelOutput>(mlContext));
             await gridSearch.Fit(dataView);
         }
 
@@ -153,6 +156,53 @@ namespace AlgorithmExtensions.Tests
             var gridSearch = new GridSearchCV<ModelOutput>(mlContext, pipelineTamplate, parameters);
             var result = gridSearch.GeneratePipelinesFromParameters().ToArray();
             Assert.Equal(2, result.Count());
+        }
+
+        [Fact]
+        public void TrainGithubIssue()
+        {
+            var mlContext = new MLContext();
+            var data = mlContext.Data.LoadFromTextFile<GihubIssue>(@"C:\Users\Oliver\Desktop\issues.tsv", hasHeader: true);
+
+            var pipeline = mlContext.Transforms.Conversion.MapValueToKey(inputColumnName: "Area", outputColumnName: "Label")
+                .Append(mlContext.Transforms.Text.FeaturizeText(inputColumnName: "Title", outputColumnName: "TitleFeaturized"))
+                .Append(mlContext.Transforms.Text.FeaturizeText(inputColumnName: "Description", outputColumnName: "DescriptionFeaturized"))
+                .Append(mlContext.Transforms.Concatenate("Features", "TitleFeaturized", "DescriptionFeaturized"));
+
+            var trainingPipeline = pipeline.Append(mlContext.MulticlassClassification.Trainers.SdcaMaximumEntropy("Label", "Features"));
+            var transformer = trainingPipeline.Fit(data);
+            var newData = transformer.Transform(data);
+            //var metrics = mlContext.MulticlassClassification.CrossValidate(data, trainingPipeline);
+
+            Debug.WriteLine("");
+        }
+
+        [Fact]
+        public async Task TrainGridSearchOnGithubIssue()
+        {
+            var mlContext = new MLContext();
+            var data = mlContext.Data.LoadFromTextFile<GihubIssue>(@"C:\Users\Oliver\Desktop\issues.tsv", hasHeader: true);
+
+            var pipelineTemplate = new PipelineTemplate();
+
+            var mapValToKey = new Func<string, string, int, KeyOrdinality, bool, IDataView, ValueToKeyMappingEstimator>(mlContext.Transforms.Conversion.MapValueToKey);
+            pipelineTemplate.Add(mapValToKey, "key", new object[] { "Label", "Area", 1000000, KeyOrdinality.ByOccurrence, false, null });
+            var featurizeText = new Func<string, string, TextFeaturizingEstimator>(mlContext.Transforms.Text.FeaturizeText);
+            pipelineTemplate.Add(featurizeText, "featurize1", new object[] { "TitleFeaturized", "Title" });
+            pipelineTemplate.Add(featurizeText, "featurize2", new object[] { "DescriptionFeaturized", "Description" });
+            pipelineTemplate.Add(mlContext.Transforms.Concatenate, "concatenate", new object[] { "Features", new string[] { "TitleFeaturized", "DescriptionFeaturized" } });
+
+            var model = new Func<SdcaMaximumEntropyMulticlassTrainer.Options, SdcaMaximumEntropyMulticlassTrainer>(mlContext.MulticlassClassification.Trainers.SdcaMaximumEntropy);
+            pipelineTemplate.Add(model, "model");
+
+            var parameters = new Dictionary<string, string[]>();
+            parameters.Add("model", new string[] { "ConvergenceTolerance_0,1" });
+
+
+            var gridSearch = new GridSearchCV<GitHubIssueOutput>(mlContext, pipelineTemplate, parameters, new FScoringFunctionMulticlass<GitHubIssueOutput>(mlContext, 22, true));
+            await gridSearch.Fit(data);
+
+
         }
     }
 }

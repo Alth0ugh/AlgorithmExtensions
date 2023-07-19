@@ -14,7 +14,7 @@ namespace AlgorithmExtensions.Scoring
                 return;
             }
 
-            if (propertyInfo.PropertyType != typeof(int) && propertyInfo.PropertyType != typeof(bool))
+            if (propertyInfo.PropertyType != typeof(int) && propertyInfo.PropertyType != typeof(bool) && propertyInfo.PropertyType != typeof(uint))
             {
                 throw new PropertyTypeException($"Properties with attributes {typeof(GoldAttribute)} or {typeof(PredictionAttribute)} should be of type {typeof(int)} or {typeof(bool)}");
             }
@@ -25,6 +25,10 @@ namespace AlgorithmExtensions.Scoring
             if (value is int intVal)
             {
                 return intVal;
+            }
+            else if (value is uint uintVal)
+            {
+                return (int)uintVal;
             }
             return ((bool)value).ToInt();
         }

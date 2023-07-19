@@ -15,13 +15,15 @@ namespace AlgorithmExtensions.Scoring
         private FScoreType _fscoreType;
         private int _classCount;
         private MLContext _mlContext;
+        private int _offset;
 
-        public FScoringFunctionMulticlass(MLContext mlContext, int classCount, float beta = 1, FScoreType fScoreType = FScoreType.MicroAveraged)
+        public FScoringFunctionMulticlass(MLContext mlContext, int classCount, bool isCountingFromOne = false, float beta = 1, FScoreType fScoreType = FScoreType.MicroAveraged)
         {
             _mlContext = mlContext;
             _beta = beta;
             _fscoreType = fScoreType;
             _classCount = classCount;
+            _offset = isCountingFromOne.ToInt();
         }
 
         public float Score(IDataView predicted)
@@ -52,12 +54,12 @@ namespace AlgorithmExtensions.Scoring
 
                 if (goldValue == predictedValue)
                 {
-                    fMetrics[goldValue].TP++;
+                    fMetrics[goldValue - _offset].TP++;
                 }
                 else if(goldValue != predictedValue)
                 {
-                    fMetrics[goldValue].FN++;
-                    fMetrics[predictedValue].FP++;
+                    fMetrics[goldValue - _offset].FN++;
+                    fMetrics[predictedValue - _offset].FP++;//Throw exception when there are more classes than supplied in the parameter
                 }
             }
 
