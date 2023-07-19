@@ -1,12 +1,4 @@
-﻿using Microsoft.ML;
-using Microsoft.ML.Trainers;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
-using static Microsoft.ML.TrainCatalogBase;
+﻿using Microsoft.ML.Trainers;
 
 namespace AlgorithmExtensions.Hyperalgorithms
 {

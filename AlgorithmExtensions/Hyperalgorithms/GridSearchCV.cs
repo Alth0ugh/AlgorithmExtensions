@@ -3,14 +3,6 @@ using AlgorithmExtensions.Scoring;
 using Microsoft.ML;
 using Microsoft.ML.Data;
 using Microsoft.ML.Trainers;
-using Newtonsoft.Json.Serialization;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static Microsoft.ML.TrainCatalogBase;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace AlgorithmExtensions.Hyperalgorithms
 {
