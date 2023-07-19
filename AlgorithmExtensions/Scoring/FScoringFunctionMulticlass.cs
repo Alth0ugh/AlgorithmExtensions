@@ -8,7 +8,7 @@ namespace AlgorithmExtensions.Scoring
         MicroAveraged
     }
 
-    public class FScoringFunctionMulticlass<Tout> : NumericScoringFunctionBase<Tout>, IScoringFunction where Tout : class, new()
+    public class FScoringFunctionMulticlass<Tout> : IntegerScoringFunctionBase<Tout>, IScoringFunction where Tout : class, new()
     {
         private float _beta;
         private FScoreType _fscoreType;

@@ -5,7 +5,7 @@ using System.Reflection;
 
 namespace AlgorithmExtensions.Scoring
 {
-    public class NumericScoringFunctionBase<Tout> : ScoringFunctionBase<Tout>
+    public class IntegerScoringFunctionBase<Tout> : ScoringFunctionBase<Tout>
     {
         public void CheckIfPropertyTypeIsNumber(PropertyInfo propertyInfo)
         {

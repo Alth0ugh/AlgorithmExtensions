@@ -12,7 +12,7 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace AlgorithmExtensions.Scoring
 {
-    public class AccuracyScoringFunction<Tout> : NumericScoringFunctionBase<Tout>, IScoringFunction where Tout : class, new()
+    public class AccuracyScoringFunction<Tout> : IntegerScoringFunctionBase<Tout>, IScoringFunction where Tout : class, new()
     {
         private MLContext _mlContext;
         public AccuracyScoringFunction(MLContext context)

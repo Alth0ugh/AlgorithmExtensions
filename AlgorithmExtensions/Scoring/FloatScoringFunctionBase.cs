@@ -9,18 +9,18 @@ using System.Threading.Tasks;
 
 namespace AlgorithmExtensions.Scoring
 {
-    public class BinaryScoringFunctionBase<Tout> : IntegerScoringFunctionBase<Tout>
+    public class FloatScoringFunctionBase<Tout> : ScoringFunctionBase<Tout>
     {
-        public void CheckIfPropertyTypeIsBool(PropertyInfo propertyInfo)
+        public void CheckIfPropertyTypeIsFloat(PropertyInfo propertyInfo)
         {
             if (propertyInfo == null)
             {
                 return;
             }
 
-            if (propertyInfo.PropertyType != typeof(bool))
+            if (propertyInfo.PropertyType != typeof(float))
             {
-                throw new PropertyTypeException($"Properties with attributes {typeof(GoldAttribute)} or {typeof(PredictionAttribute)} should be of type {typeof(bool)}");
+                throw new PropertyTypeException($"Properties with attributes {typeof(GoldAttribute)} or {typeof(PredictionAttribute)} should be of type {typeof(float)}");
             }
         }
     }
