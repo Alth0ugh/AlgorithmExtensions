@@ -1,4 +1,5 @@
 ﻿using AlgorithmExtensions.Exceptions;
+using AlgorithmExtensions.Hyperalgorithms.ParameterProviders;
 using AlgorithmExtensions.Scoring;
 using Microsoft.ML;
 using Microsoft.ML.Data;
@@ -9,7 +10,7 @@ namespace AlgorithmExtensions.Hyperalgorithms
     public class GridSearchCV<TOut>
     {
         private PipelineTemplate _template;
-        private Dictionary<string, string[]> _parameters;
+        private Dictionary<string, IParameterProvider[]> _parameters;
         private IScoringFunction _scoringFunction;
         private readonly int _numberOfJobs;
         private bool _refit;
@@ -17,9 +18,9 @@ namespace AlgorithmExtensions.Hyperalgorithms
         private MLContext _mlContext;
         private IEstimator<ITransformer>[] _estimators = null;
         public IEstimator<ITransformer> BestEstimator { get; set; }
-        public Dictionary<string, string> BestParameters { get; set; }
+        public Dictionary<string, ParameterInstance[]> BestParameters { get; set; }
 
-        public GridSearchCV(MLContext mlContext, PipelineTemplate template, Dictionary<string, string[]> parameters, IScoringFunction scoringFunction = null, int numberOfJobs = -1, bool refit = true, int crossValidationSplits = 5)
+        public GridSearchCV(MLContext mlContext, PipelineTemplate template, Dictionary<string, IParameterProvider[]> parameters, IScoringFunction scoringFunction = null, int numberOfJobs = -1, bool refit = true, int crossValidationSplits = 5)
         {
             _template = template;
             _parameters = parameters;
@@ -30,26 +31,40 @@ namespace AlgorithmExtensions.Hyperalgorithms
             _crossValidationSplits = crossValidationSplits;
         }
 
-        public IEnumerable<Dictionary<string, string>> GenerateParameterCombinations()
+        public IEnumerable<Dictionary<string, ParameterInstance[]>> GenerateParameterCombinations()
         {
-            var kvp = _parameters.ToArray();
             var domains = new List<int>();
-            foreach (var kvp2 in kvp)
+            var estimatorNames = _parameters.Keys.ToArray();
+            foreach (var key in estimatorNames)
             {
-                domains.Add(kvp2.Value.Length);
+                var modelParameters = _parameters[key];
+                foreach (var parameter in modelParameters)
+                {
+                    domains.Add(parameter.GetParameterValues().Length);
+                }
             }
 
             var indexCombinations = GenerateIndexCombinations(domains.ToArray());
 
             foreach (var combination in indexCombinations)
             {
-                var dict = new Dictionary<string, string>();
-
-                for (int i = 0; i < kvp.Length; i++)
+                var dict = new Dictionary<string, ParameterInstance[]>();
+                var index = 0;
+                for (int i = 0; i < estimatorNames.Length; i++)
                 {
-                    dict.Add(kvp[i].Key, kvp[i].Value[combination[i]]);
+                    var parameterInstances = new List<ParameterInstance>();
+                    for (int j = 0; j < _parameters[estimatorNames[i]].Length; j++)
+                    {
+                        var possibleParameters = _parameters[estimatorNames[i]][j].GetParameterValues();
+                        parameterInstances.Add(new ParameterInstance() 
+                        { 
+                            Name = _parameters[estimatorNames[i]][j].Name, 
+                            Value = possibleParameters[combination[index]] 
+                        });
+                        index++;
+                    }
+                    dict.Add(estimatorNames[i], parameterInstances.ToArray());
                 }
-
                 yield return dict;
             }
         }
@@ -114,7 +129,7 @@ namespace AlgorithmExtensions.Hyperalgorithms
             BestParameters = pipelines[bestEstimator];
         }
 
-        private float CrossValidateModel(Dictionary<string, string> parameters, IDataView data)
+        private float CrossValidateModel(Dictionary<string, ParameterInstance[]> parameters, IDataView data)
         {
             var splits = _mlContext.Data.CrossValidationSplit(data, _crossValidationSplits);
             var results = new List<float>();
@@ -131,7 +146,7 @@ namespace AlgorithmExtensions.Hyperalgorithms
         }
 
 
-        public EstimatorChain<ITransformer> GenerateEstimatorChain(Dictionary<string, string> parameterCollection)
+        public EstimatorChain<ITransformer> GenerateEstimatorChain(Dictionary<string, ParameterInstance[]> parameterCollection)
         {
             var estimator = new EstimatorChain<ITransformer>();
             foreach (var item in _template.Delegates)
@@ -141,7 +156,7 @@ namespace AlgorithmExtensions.Hyperalgorithms
             return estimator;
         }
 
-        private IEstimator<ITransformer> GenerateInstanceFromParameters(PipelineItem pipelineItem, Dictionary<string, string> parameterCollection)
+        private IEstimator<ITransformer> GenerateInstanceFromParameters(PipelineItem pipelineItem, Dictionary<string, ParameterInstance[]> parameterCollection)
         {
             var creationalDelegate = pipelineItem.CreationalDelegate;
             var delegateParameters = creationalDelegate.Method.GetParameters();
@@ -176,7 +191,24 @@ namespace AlgorithmExtensions.Hyperalgorithms
             return estimator;
         }
 
-        private TrainerInputBase GenerateAndSetOptions(Type optionType, PipelineItem pipelineItem, Dictionary<string, string> parameterCollection)
+        /*
+        private IEstimator<ITransformer> CreateTransformerFromDelegate(PipelineItem pipelineItem, Dictionary<string, string> parameterCollection)
+        {
+            var defaultParameters = pipelineItem.DefaultParameters;
+            var delegateParameters = pipelineItem.CreationalDelegate.Method.GetParameters();
+            var parameterEntry = parameterCollection[pipelineItem.Name].Split("_");
+            var targetParameterName = parameterEntry[0];
+            var targetParameterValue = parameterEntry[1];
+
+            var targetParameter = from parameter in delegateParameters
+                                  where parameter.Name == targetParameterName
+                                  select parameter;
+
+            return null;
+        }
+        */
+
+        private TrainerInputBase GenerateAndSetOptions(Type optionType, PipelineItem pipelineItem, Dictionary<string, ParameterInstance[]> parameterCollection)
         {
             var options = (TrainerInputBase)Activator.CreateInstance(optionType);
             var defaultOptions = pipelineItem.DefaultOptions;
@@ -188,12 +220,10 @@ namespace AlgorithmExtensions.Hyperalgorithms
 
             if (parameterCollection.ContainsKey(pipelineItem.Name))
             {
-                var parameterEntry = parameterCollection[pipelineItem.Name].Split("_");
-                if (parameterEntry.Length > 2)
+                foreach (var parameter in parameterCollection[pipelineItem.Name])
                 {
-                    throw new IncorrectParameterFormatException($"Input parameter {parameterCollection[pipelineItem.Name]} is in incorrect format.");
+                    SetPropertyOfOptions(options, parameter.Name, parameter.Value);
                 }
-                SetPropertyOfOptions(options, parameterEntry[0], parameterEntry[1]);
             }
 
             return options;
@@ -229,7 +259,7 @@ namespace AlgorithmExtensions.Hyperalgorithms
             }
         }
 
-        private void SetPropertyOfOptions(TrainerInputBase options, string parameterName, string parameterValue)
+        private void SetPropertyOfOptions(TrainerInputBase options, string parameterName, object parameterValue)
         {
             var property = from prop in options.GetType().GetFields()
                            where prop.Name == parameterName
@@ -239,7 +269,7 @@ namespace AlgorithmExtensions.Hyperalgorithms
             {
                 throw new IncorrectOptionParameterException($"Parameter {parameterName} was not found on object of type {options.GetType().FullName}");
             }
-
+            /*
             var setType = property.First().FieldType;
             object convertedParameter = null;
             if (Nullable.GetUnderlyingType(setType) != null)
@@ -254,9 +284,9 @@ namespace AlgorithmExtensions.Hyperalgorithms
             catch
             {
                 throw new ParameterConversionException($"Parameter {parameterName} could not be converted to type {setType.Name}");
-            }
+            }*/
 
-            property.First().SetValue(options, convertedParameter);
+            property.First().SetValue(options, parameterValue);
         }
     }
 }
