@@ -11,6 +11,7 @@ using Microsoft.ML.Vision;
 using NumSharp.Extensions;
 using System.Diagnostics;
 using System.Numerics;
+using Xunit;
 using Xunit.Sdk;
 using static Microsoft.ML.TrainCatalogBase;
 using static Microsoft.ML.Transforms.ValueToKeyMappingEstimator;
@@ -216,6 +217,65 @@ namespace AlgorithmExtensions.Tests
             await gridSearch.Fit(data);
 
             Debug.WriteLine("");
+        }
+
+        [Fact]
+        public async Task TrainImageGridSearch()
+        {
+            var mlContext = new MLContext();
+            IEnumerable<ImgData> imgs = LoadImagesFromDirectory(folder: @"C:\Users\Oliver\Desktop\SDNET", useFolderNameAsLabel: true);
+            IDataView imgData = mlContext.Data.LoadFromEnumerable(imgs);
+            var options = new ImageClassificationTrainer.Options();
+            options.BatchSize = 500;
+            options.Epoch = 1;
+            options.LabelColumnName = "LabelKey";
+
+            var preprocessingPipeline = mlContext.Transforms.Conversion.MapValueToKey(inputColumnName: "Label", outputColumnName: "LabelKey")
+                .Append(mlContext.Transforms.LoadRawImageBytes(outputColumnName: "Features", imageFolder: @"C:\Users\Oliver\Desktop\SDNET", inputColumnName: "ImagePath"))
+            .Append(mlContext.MulticlassClassification.Trainers.ImageClassification(options));
+
+            //preprocessingPipeline.Fit(imgData);
+            var metrics = mlContext.MulticlassClassification.CrossValidate(imgData, preprocessingPipeline, labelColumnName: "LabelKey");
+
+            Debug.WriteLine("");
+        }
+
+        public static IEnumerable<ImgData> LoadImagesFromDirectory(string folder, bool useFolderNameAsLabel = true)
+        {
+            //get all file paths from the subdirectories
+            var files = Directory.GetFiles(folder, "*", searchOption:
+            SearchOption.AllDirectories);
+            //iterate through each file
+            foreach (var file in files)
+            {
+                //Image Classification API supports .jpg and .png formats; check img formats
+                if ((Path.GetExtension(file) != ".jpg") &&
+                 (Path.GetExtension(file) != ".png"))
+                    continue;
+                //store filename in a variable, say ‘label’
+                var label = Path.GetFileName(file);
+                /* If the useFolderNameAsLabel parameter is set to true, then name 
+                   of parent directory of the image file is used as the label. Else label is expected to be the file name or a a prefix of the file name. */
+                if (useFolderNameAsLabel)
+                    label = Directory.GetParent(file).Name;
+                else
+                {
+                    for (int index = 0; index < label.Length; index++)
+                    {
+                        if (!char.IsLetter(label[index]))
+                        {
+                            label = label.Substring(0, index);
+                            break;
+                        }
+                    }
+                }
+                //create a new instance of ImgData()
+                yield return new ImgData()
+                {
+                    ImagePath = file,
+                    Label = label
+                };
+            }
         }
     }
 }
