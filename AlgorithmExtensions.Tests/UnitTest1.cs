@@ -1,5 +1,6 @@
 using AlgorithmExtensions.Hyperalgorithms;
 using AlgorithmExtensions.Hyperalgorithms.ParameterProviders;
+using AlgorithmExtensions.ResNets;
 using AlgorithmExtensions.Scoring;
 using Microsoft.ML;
 using Microsoft.ML.Data;
@@ -8,7 +9,6 @@ using Microsoft.ML.Trainers.LightGbm;
 using Microsoft.ML.Transforms;
 using Microsoft.ML.Transforms.Text;
 using Microsoft.ML.Vision;
-using NumSharp.Extensions;
 using System.Diagnostics;
 using System.Numerics;
 using Xunit;
@@ -276,6 +276,13 @@ namespace AlgorithmExtensions.Tests
                     Label = label
                 };
             }
+        }
+
+        [Fact]
+        public void TestResNet()
+        {
+            var mlContext = new MLContext();
+            var model = new ResNetTrainer(new Options() { Architecture = ResNetArchitecture.ResNet50 });
         }
     }
 }
