@@ -2,26 +2,37 @@
 
 namespace AlgorithmExtensions.Hyperalgorithms
 {
+    /// <summary>
+    /// Represents a machine learning pipeline.
+    /// </summary>
     public class PipelineTemplate
     {
-        public List<PipelineItem> Delegates { get; } = new List<PipelineItem>();
+        /// <summary>
+        /// List of items in the pipeline
+        /// </summary>
+        public List<PipelineItem> Items { get; } = new List<PipelineItem>();
 
+        /// <summary>
+        /// Adds a creational delegate to the pipeline.
+        /// </summary>
+        /// <param name="creationalDelegate">Creational delegate to be added.</param>
+        /// <param name="name">Name to be associated with result of calling of the creational delegate.</param>
         public void Add(Delegate creationalDelegate, string name = "")
         {
             var item = new PipelineItem(creationalDelegate, name);
-            Delegates.Add(item);
+            Items.Add(item);
         }
 
+        /// <summary>
+        /// Adds a creational delegate to the pipeline.
+        /// </summary>
+        /// <param name="creationalDelegate">Creational delegate to be added.</param>
+        /// <param name="name">Name to be associated with result of calling of the creational delegate.</param>
+        /// <param name="functionParameters">Parameters to be passed to the creational delegate.</param>
         public void Add(Delegate creationalDelegate, string name = "", params object[] functionParameters)
         {
             var item = new PipelineItem(creationalDelegate, name, functionParameters);
-            Delegates.Add(item);
-        }
-
-        public void Add(Delegate creationalDelegate, string name = "", TrainerInputBase defaultOptions = null)
-        {
-            var item = new PipelineItem(creationalDelegate, name, defaultOptions: defaultOptions);
-            Delegates.Add(item);
+            Items.Add(item);
         }
     }
 }

@@ -2,10 +2,22 @@
 
 namespace AlgorithmExtensions.Scoring
 {
+    /// <summary>
+    /// F-metrics used for calculation of F-score of a model.
+    /// </summary>
     internal struct FMetricsForClass
     {
+        /// <summary>
+        /// False positive count.
+        /// </summary>
         internal int FP { get; set; }
+        /// <summary>
+        /// True positive count.
+        /// </summary>
         internal int TP { get; set; }
+        /// <summary>
+        /// False negative count.
+        /// </summary>
         internal int FN { get; set; }
 
         public FMetricsForClass()

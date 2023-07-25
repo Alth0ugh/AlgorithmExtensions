@@ -1,15 +1,23 @@
-﻿using Microsoft.ML;
+﻿using AlgorithmExtensions.Scoring.BaseClasses;
+using Microsoft.ML;
 
 namespace AlgorithmExtensions.Scoring
 {
+    /// <summary>
+    /// Function that scores model's accuracy.
+    /// </summary>
+    /// <typeparam name="Tout">Object representing the structure of the output data from the model.</typeparam>
     public class AccuracyScoringFunction<Tout> : IntegerScoringFunctionBase<Tout>, IScoringFunction where Tout : class, new()
     {
         private MLContext _mlContext;
+
         public AccuracyScoringFunction(MLContext context)
         {
             _mlContext = context;
         }
 
+        /// <inheritdoc/>
+        /// <exception cref="NullReferenceException">Thrown when MLContext is null.</exception>
         public float Score(IDataView predicted)
         {
             if (_mlContext == null)

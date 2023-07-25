@@ -1,7 +1,12 @@
-﻿using Microsoft.ML;
+﻿using AlgorithmExtensions.Scoring.BaseClasses;
+using Microsoft.ML;
 
 namespace AlgorithmExtensions.Scoring
 {
+    /// <summary>
+    /// Scoring function that calculates Mean Square Error of a regressor.
+    /// </summary>
+    /// <typeparam name="Tout">Object representing the structure of the output data from the model.</typeparam>
     public class MeanSquareErrorScoringFunction<Tout> : IntegerScoringFunctionBase<Tout>, IScoringFunction where Tout : class, new()
     {
         private MLContext _mlContext;
@@ -10,6 +15,8 @@ namespace AlgorithmExtensions.Scoring
             _mlContext = mlContext;
         }
 
+        /// <inheritdoc/>
+        /// <exception cref="NullReferenceException">Thrown when MLContext is null.</exception>
         public float Score(IDataView predicted)
         {
             if (_mlContext == null)

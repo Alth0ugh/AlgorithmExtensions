@@ -7,31 +7,45 @@ using Microsoft.ML.Trainers;
 
 namespace AlgorithmExtensions.Hyperalgorithms
 {
-    public class GridSearchCV<TOut>
+    /// <summary>
+    /// Class that tests combinations of parameter values of a model, evaluates it and finds the model with the highest score.
+    /// </summary>
+    public class GridSearchCV
     {
         private PipelineTemplate _template;
-        private Dictionary<string, IParameterProvider[]> _parameters;
+        private ParameterProviderForModel _parameters;
         private IScoringFunction _scoringFunction;
-        private readonly int _numberOfJobs;
         private bool _refit;
         private int _crossValidationSplits;
         private MLContext _mlContext;
         private IEstimator<ITransformer>[] _estimators = null;
         public IEstimator<ITransformer> BestEstimator { get; set; }
-        public Dictionary<string, ParameterInstance[]> BestParameters { get; set; }
+        public ParameterProviderForModel BestParameters { get; set; }
 
-        public GridSearchCV(MLContext mlContext, PipelineTemplate template, Dictionary<string, IParameterProvider[]> parameters, IScoringFunction scoringFunction = null, int numberOfJobs = -1, bool refit = true, int crossValidationSplits = 5)
+        /// <summary>
+        /// Creates new instance of grid search.
+        /// </summary>
+        /// <param name="mlContext">Machine learning context.</param>
+        /// <param name="template">Model template.</param>
+        /// <param name="parameters">Parameter provider for the model.</param>
+        /// <param name="scoringFunction">Scoring function to be used for scoring the models.</param>
+        /// <param name="refit">If true, the best model is refitted on the whole dataset.</param>
+        /// <param name="crossValidationSplits">Number of splits for cross-validation.</param>
+        public GridSearchCV(MLContext mlContext, PipelineTemplate template, ParameterProviderForModel parameters, IScoringFunction scoringFunction = null, bool refit = true, int crossValidationSplits = 5)
         {
             _template = template;
             _parameters = parameters;
             _scoringFunction = scoringFunction;
-            _numberOfJobs = numberOfJobs;
             _refit = refit;
             _mlContext = mlContext;
             _crossValidationSplits = crossValidationSplits;
         }
 
-        public IEnumerable<Dictionary<string, ParameterInstance[]>> GenerateParameterCombinations()
+        /// <summary>
+        /// Generates all combinations of parameter values for a model.
+        /// </summary>
+        /// <returns>Enumerable containing the parameter values combinations.</returns>
+        private IEnumerable<Dictionary<string, ParameterInstance[]>> GenerateParameterCombinations()
         {
             var domains = new List<int>();
             var estimatorNames = _parameters.Keys.ToArray();
@@ -69,7 +83,13 @@ namespace AlgorithmExtensions.Hyperalgorithms
             }
         }
 
-        public IEnumerable<List<int>> GenerateIndexCombinations(int[] domain)
+        /// <summary>
+        /// Generates combinations of indices for a list of lists. From each list is picked exactly one index 
+        /// and the combinations of such indices are generated.
+        /// </summary>
+        /// <param name="domain">Number of elements in each list.</param>
+        /// <returns>Enumerable of index combinations.</returns>
+        private IEnumerable<List<int>> GenerateIndexCombinations(int[] domain)
         {
             if (domain.Length == 0)
             {
@@ -94,17 +114,11 @@ namespace AlgorithmExtensions.Hyperalgorithms
             }
         }
 
-        public IEnumerable<IEstimator<ITransformer>> GeneratePipelinesFromParameters()
-        {
-            //TODO: this could be an empty enumerable
-            var parameterDictionaries = GenerateParameterCombinations();
-            foreach (var parameterCollection in parameterDictionaries)
-            {
-                var estimator = GenerateEstimatorChain(parameterCollection);
-                yield return estimator;
-            }
-        }
-
+        /// <summary>
+        /// Fits model with all the combinations of parameters and finds the best one according to scoring function.
+        /// </summary>
+        /// <param name="data">Data to be trained on.</param>
+        /// <returns>Task representing training of the model.</returns>
         public async Task Fit(IDataView data)
         {
             var pipelines = GenerateParameterCombinations().ToArray();
@@ -126,9 +140,15 @@ namespace AlgorithmExtensions.Hyperalgorithms
             }
 
             BestEstimator = GenerateEstimatorChain(pipelines[bestEstimator]);
-            BestParameters = pipelines[bestEstimator];
+            //BestParameters = pipelines[bestEstimator];
         }
 
+        /// <summary>
+        /// Cross-validates a model.
+        /// </summary>
+        /// <param name="parameters">Parameters to be used for training.</param>
+        /// <param name="data">Data to be trained on.</param>
+        /// <returns>Score computed be averaging the individual scores of each fold.</returns>
         private float CrossValidateModel(Dictionary<string, ParameterInstance[]> parameters, IDataView data)
         {
             var splits = _mlContext.Data.CrossValidationSplit(data, _crossValidationSplits);
@@ -145,17 +165,28 @@ namespace AlgorithmExtensions.Hyperalgorithms
             return sum / results.Count;
         }
 
-
-        public EstimatorChain<ITransformer> GenerateEstimatorChain(Dictionary<string, ParameterInstance[]> parameterCollection)
+        /// <summary>
+        /// Generates model using a set of parameter values.
+        /// </summary>
+        /// <param name="parameterCollection">Parameters to be used for the model.</param>
+        /// <returns>Generated model with given parameters.</returns>
+        private EstimatorChain<ITransformer> GenerateEstimatorChain(Dictionary<string, ParameterInstance[]> parameterCollection)
         {
             var estimator = new EstimatorChain<ITransformer>();
-            foreach (var item in _template.Delegates)
+            foreach (var item in _template.Items)
             {
                 estimator = estimator.Append(GenerateInstanceFromParameters(item, parameterCollection));
             }
             return estimator;
         }
 
+        /// <summary>
+        /// Generates an instance of estimator or transformer with given parameters.
+        /// </summary>
+        /// <param name="pipelineItem">Item to generate instance of.</param>
+        /// <param name="parameterCollection">Set of parameters for the model.</param>
+        /// <returns>Instance of estimator or transformer.</returns>
+        /// <exception cref="IncorrectCreationalDelegateException">Thrown if the creational delegate is in incorrect format (function with input parameter of type TrainerInputBase)</exception>
         private IEstimator<ITransformer> GenerateInstanceFromParameters(PipelineItem pipelineItem, Dictionary<string, ParameterInstance[]> parameterCollection)
         {
             var creationalDelegate = pipelineItem.CreationalDelegate;
@@ -208,6 +239,13 @@ namespace AlgorithmExtensions.Hyperalgorithms
         }
         */
 
+        /// <summary>
+        /// Generates options for model and sets options according to parameters set by the user values and deafult values.
+        /// </summary>
+        /// <param name="optionType">Type of the options to be generated.</param>
+        /// <param name="pipelineItem">Item that options are generated for.</param>
+        /// <param name="parameterCollection">Parameters for model.</param>
+        /// <returns>Options with set parameter values.</returns>
         private TrainerInputBase GenerateAndSetOptions(Type optionType, PipelineItem pipelineItem, Dictionary<string, ParameterInstance[]> parameterCollection)
         {
             var options = (TrainerInputBase)Activator.CreateInstance(optionType);
@@ -229,6 +267,12 @@ namespace AlgorithmExtensions.Hyperalgorithms
             return options;
         }
 
+        /// <summary>
+        /// Sets default parameter values in options.
+        /// </summary>
+        /// <param name="options">Options to set default values of.</param>
+        /// <param name="defaultOptions">Options with default values set.</param>
+        /// <exception cref="OptionTypeMismatchException">Thrown if options and defaultOptions do not match in type.</exception>
         private void SetDefaultOptions(TrainerInputBase options, TrainerInputBase defaultOptions)
         {
             if (options.GetType() != defaultOptions.GetType())
@@ -243,6 +287,13 @@ namespace AlgorithmExtensions.Hyperalgorithms
             }
         }
 
+        /// <summary>
+        /// Instantiates an estimator with options.
+        /// </summary>
+        /// <param name="creationalDelegate">Delegate that instantiates the estimator.</param>
+        /// <param name="options">Options to be used for instantiation.</param>
+        /// <returns>Instance of the estimator.</returns>
+        /// <exception cref="IncorrectCreationalDelegateException">Thrown if the creational delegate is in incorrect format (function with input parameter of type TrainerInputBase)</exception>
         private IEstimator<ITransformer> MakeInstanceOfEstimator(Delegate creationalDelegate, TrainerInputBase options)
         {
             try
@@ -259,6 +310,13 @@ namespace AlgorithmExtensions.Hyperalgorithms
             }
         }
 
+        /// <summary>
+        /// Sets a property of options to a value.
+        /// </summary>
+        /// <param name="options">Options to set value of a property.</param>
+        /// <param name="parameterName">Name of the property to be set.</param>
+        /// <param name="parameterValue">Value of the property.</param>
+        /// <exception cref="IncorrectOptionParameterException">Thrown if the property is not found.</exception>
         private void SetPropertyOfOptions(TrainerInputBase options, string parameterName, object parameterValue)
         {
             var property = from prop in options.GetType().GetFields()
@@ -269,22 +327,6 @@ namespace AlgorithmExtensions.Hyperalgorithms
             {
                 throw new IncorrectOptionParameterException($"Parameter {parameterName} was not found on object of type {options.GetType().FullName}");
             }
-            /*
-            var setType = property.First().FieldType;
-            object convertedParameter = null;
-            if (Nullable.GetUnderlyingType(setType) != null)
-            {
-                setType = Nullable.GetUnderlyingType(setType);
-            }
-            
-            try
-            {
-                convertedParameter = Convert.ChangeType(parameterValue, setType);
-            }
-            catch
-            {
-                throw new ParameterConversionException($"Parameter {parameterName} could not be converted to type {setType.Name}");
-            }*/
 
             property.First().SetValue(options, parameterValue);
         }

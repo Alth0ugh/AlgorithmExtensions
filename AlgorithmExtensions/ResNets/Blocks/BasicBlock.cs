@@ -3,8 +3,12 @@ using Tensorflow;
 
 namespace AlgorithmExtensions.ResNets.Blocks
 {
+    /// <summary>
+    /// Represents basic block in ResNet.
+    /// </summary>
     internal class BasicBlock : ResidualBlockBase
     {
+        /// <inheritdoc/>
         internal override Tensors CreateBlock(Tensors input, int filters, Shape stride, bool useShortcut)
         {
             var shortcut = input;

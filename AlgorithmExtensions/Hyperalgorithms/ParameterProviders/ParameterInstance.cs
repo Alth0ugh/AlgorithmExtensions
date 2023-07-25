@@ -1,14 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace AlgorithmExtensions.Hyperalgorithms.ParameterProviders
+﻿namespace AlgorithmExtensions.Hyperalgorithms.ParameterProviders
 {
+    /// <summary>
+    /// Represents an instance of parameter with assigned value.
+    /// </summary>
     public class ParameterInstance
     {
+        /// <summary>
+        /// Name of the parameter.
+        /// </summary>
         public string Name { get; set; }
+        /// <summary>
+        /// Value of the parameter.
+        /// </summary>
         public object Value { get; set; }
     }
 }

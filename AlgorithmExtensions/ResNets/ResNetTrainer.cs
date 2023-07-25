@@ -7,16 +7,25 @@ using AlgorithmExtensions.ResNets.Blocks;
 
 namespace AlgorithmExtensions.ResNets
 {
+    /// <summary>
+    /// Trainer for ResNet.
+    /// </summary>
     public class ResNetTrainer : IEstimator<ImageClassificationModelParameters>
     {
         private Options _options;
-        public IModel _model;
+        private IModel _model;
+
         public ResNetTrainer(Options options)
         {
             _options = options;
             _model = GenerateModel(options.Architecture);
         }
 
+        /// <summary>
+        /// Generates ResNet with a given architecture.
+        /// </summary>
+        /// <param name="architecture">Architecture of ResNet.</param>
+        /// <returns>ResNet model.</returns>
         private IModel GenerateModel(ResNetArchitecture architecture)
         {
             var input = tf.keras.layers.Input(new Shape(224, 224, 3));
@@ -87,11 +96,21 @@ namespace AlgorithmExtensions.ResNets
             return model;
         }
 
+        /// <summary>
+        /// Fits the model.
+        /// </summary>
+        /// <param name="input">Data to fit the model on.</param>
+        /// <returns></returns>
         public ImageClassificationModelParameters Fit(IDataView input)
         {
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// Returns the schema of ouput with regards to the input data.
+        /// </summary>
+        /// <param name="inputSchema">Schema of the input data.</param>
+        /// <returns>Output schema.</returns>
         public SchemaShape GetOutputSchema(SchemaShape inputSchema)
         {
             throw new NotImplementedException();

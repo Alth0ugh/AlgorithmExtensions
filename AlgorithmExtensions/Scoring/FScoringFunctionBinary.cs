@@ -1,7 +1,12 @@
-﻿using Microsoft.ML;
+﻿using AlgorithmExtensions.Scoring.BaseClasses;
+using Microsoft.ML;
 
 namespace AlgorithmExtensions.Scoring
 {
+    /// <summary>
+    /// Function that calculates model's F-score for binary classification.
+    /// </summary>
+    /// <typeparam name="Tout">Object representing the structure of the output data from the model.</typeparam>
     public class FScoringFunctionBinary<Tout> : BinaryScoringFunctionBase<Tout>, IScoringFunction where Tout : class, new()
     {
         private MLContext _mlContext;
@@ -12,6 +17,8 @@ namespace AlgorithmExtensions.Scoring
             _beta = beta;
         }
 
+        /// <inheritdoc/>
+        /// <exception cref="NullReferenceException">Thrown when MLContext is null.</exception>
         public float Score(IDataView predicted)
         {
             if (_mlContext == null)
