@@ -5,7 +5,7 @@
     /// </summary>
     public class TypeMismatchException : Exception
     {
-        public TypeMismatchException() : base() { }
+        public TypeMismatchException() { }
         public TypeMismatchException(string message) : base(message) { }
     }
 }

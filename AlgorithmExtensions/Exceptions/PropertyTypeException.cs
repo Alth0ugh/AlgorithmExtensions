@@ -5,7 +5,7 @@
     /// </summary>
     public class PropertyTypeException : Exception
     {
-        public PropertyTypeException() : base() { }
+        public PropertyTypeException() { }
         public PropertyTypeException(string message) : base(message) { }
     }
 }

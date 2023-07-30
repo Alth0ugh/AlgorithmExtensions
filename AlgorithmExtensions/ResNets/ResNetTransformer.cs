@@ -7,7 +7,7 @@ namespace AlgorithmExtensions.ResNets
     public class ResNetTransformer : ITransformer
     {
         private IModel _model;
-        
+
         internal ResNetTransformer(IModel model)
         {
             _model = model;     

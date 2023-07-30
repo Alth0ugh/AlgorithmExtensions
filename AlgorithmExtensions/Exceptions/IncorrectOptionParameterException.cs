@@ -5,7 +5,7 @@
     /// </summary>
     public class IncorrectOptionParameterException : Exception
     {
-        public IncorrectOptionParameterException() : base() { }
+        public IncorrectOptionParameterException() { }
         public IncorrectOptionParameterException(string message) : base(message) { }
     }
 }

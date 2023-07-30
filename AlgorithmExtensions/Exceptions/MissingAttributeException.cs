@@ -5,7 +5,7 @@
     /// </summary>
     public class MissingAttributeException : Exception
     {
-        public MissingAttributeException() : base() { }
+        public MissingAttributeException() { }
         public MissingAttributeException(string message) : base(message) { }
     }
 }

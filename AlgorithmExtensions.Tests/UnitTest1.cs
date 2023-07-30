@@ -231,6 +231,9 @@ namespace AlgorithmExtensions.Tests
                 .Append(mlContext.Transforms.LoadRawImageBytes(outputColumnName: "Features", imageFolder: @"C:\Users\Oliver\Desktop\SDNET", inputColumnName: "ImagePath"))
             .Append(mlContext.MulticlassClassification.Trainers.ImageClassification(options));
 
+            var a = mlContext.MulticlassClassification.Trainers.ImageClassification(options).Fit(imgData);
+            a.Save
+
             //preprocessingPipeline.Fit(imgData);
             var metrics = mlContext.MulticlassClassification.CrossValidate(imgData, preprocessingPipeline, labelColumnName: "LabelKey");
 
