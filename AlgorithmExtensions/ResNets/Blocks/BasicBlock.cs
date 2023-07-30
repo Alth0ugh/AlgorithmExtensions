@@ -22,7 +22,7 @@ namespace AlgorithmExtensions.ResNets.Blocks
 
             var x = tf.keras.layers.Conv2D(filters,
                 kernel_size: new Shape(3, 3),
-                strides: new Shape(1, 1),
+                strides: stride,
                 bias_initializer: "zeros",
                 padding: "same").Apply(input);
             x = tf.keras.layers.BatchNormalization().Apply(x);

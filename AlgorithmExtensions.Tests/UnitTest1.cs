@@ -333,7 +333,7 @@ namespace AlgorithmExtensions.Tests
 
             var data = preprocessingPipeline.Fit(imgData).Transform(imgData);
 
-            var resnet = new ResNetTrainer(new Options() { BatchSize = 30, Epochs = 1, Classes = 22, FeatureColumnName = "Features", LabelColumnName = "LabelKey" });
+            var resnet = new ResNetTrainer(new Options() { BatchSize = 30, Epochs = 1, Classes = 22, Architecture = ResNetArchitecture.ResNet18, FeatureColumnName = "Features", LabelColumnName = "LabelKey" });
 
             resnet.Fit(data);
 
