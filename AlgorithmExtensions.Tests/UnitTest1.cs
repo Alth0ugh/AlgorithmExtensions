@@ -2,7 +2,9 @@ using AlgorithmExtensions.Hyperalgorithms;
 using AlgorithmExtensions.Hyperalgorithms.ParameterProviders;
 using AlgorithmExtensions.ResNets;
 using AlgorithmExtensions.Scoring;
+using Google.Protobuf;
 using Microsoft.ML;
+using Microsoft.ML.Data;
 using Microsoft.ML.Trainers;
 using Microsoft.ML.Trainers.LightGbm;
 using Microsoft.ML.Transforms;
@@ -274,10 +276,68 @@ namespace AlgorithmExtensions.Tests
         }
 
         [Fact]
-        public void TestResNet()
+        public void GetOutputSchema()
         {
             var mlContext = new MLContext();
-            var model = new ResNetTrainer(new Options() { Architecture = ResNetArchitecture.ResNet50 });
+            var data = mlContext.Data.LoadFromTextFile<GihubIssue>(@"C:\Users\Oliver\Desktop\issues.tsv", hasHeader: true);
+
+            var pipeline = mlContext.Transforms.Conversion.MapValueToKey(inputColumnName: "Area", outputColumnName: "Label")
+                .Append(mlContext.Transforms.Text.FeaturizeText(inputColumnName: "Title", outputColumnName: "TitleFeaturized"))
+                .Append(mlContext.Transforms.Text.FeaturizeText(inputColumnName: "Description", outputColumnName: "DescriptionFeaturized"))
+                .Append(mlContext.Transforms.Concatenate("Features", "TitleFeaturized", "DescriptionFeaturized"));
+
+            var model = mlContext.MulticlassClassification.Trainers.SdcaNonCalibrated();
+
+            Debug.WriteLine("");
+        }
+        /*
+        [Fact]
+        public void TestResNetFunctions()
+        {
+            var mlContext = new MLContext();
+            IEnumerable<ImgData> imgs = LoadImagesFromDirectory(folder: @"C:\Users\Oliver\Desktop\SDNET", useFolderNameAsLabel: true);
+            IDataView imgData = mlContext.Data.LoadFromEnumerable(imgs);
+
+            var preprocessingPipeline = mlContext.Transforms.Conversion.MapValueToKey(inputColumnName: "Label", outputColumnName: "LabelKey")
+                .Append(mlContext.Transforms.LoadImages(outputColumnName: "Features", imageFolder: @"C:\Users\Oliver\Desktop\SDNET", inputColumnName: "ImagePath"));
+
+            var data = preprocessingPipeline.Fit(imgData).Transform(imgData);
+
+            var resnet = new ResNetTrainer(new Options() { BatchSize = 5, Epochs = 5 });
+
+            var featureColumn = data.Schema["Features"];
+            var labelColumn = data.Schema["LabelKey"];
+
+            var cursor1 = data.GetRowCursor(new[] { featureColumn, labelColumn });
+            var cursor2 = data.GetRowCursor(new[] { featureColumn, labelColumn });
+
+            var imageDataGetter = cursor1.GetGetter<MLImage>(featureColumn);
+            var labelGetter = cursor2.GetGetter<uint>(labelColumn);
+
+            var result = resnet.GetInputData2(cursor1, imageDataGetter);
+
+            var result2 = resnet.GetLabels(cursor2, labelGetter);
+
+            Debug.WriteLine("");
+        }
+        */
+        [Fact]
+        public void TestResNetTraining()
+        {
+            var mlContext = new MLContext();
+            IEnumerable<ImgData> imgs = LoadImagesFromDirectory(folder: @"C:\Users\Oliver\Desktop\SDNET", useFolderNameAsLabel: true);
+            IDataView imgData = mlContext.Data.LoadFromEnumerable(imgs);
+
+            var preprocessingPipeline = mlContext.Transforms.Conversion.MapValueToKey(inputColumnName: "Label", outputColumnName: "LabelKey")
+                .Append(mlContext.Transforms.LoadImages(outputColumnName: "Features", imageFolder: @"C:\Users\Oliver\Desktop\SDNET", inputColumnName: "ImagePath"));
+
+            var data = preprocessingPipeline.Fit(imgData).Transform(imgData);
+
+            var resnet = new ResNetTrainer(new Options() { BatchSize = 30, Epochs = 1, Classes = 22, FeatureColumnName = "Features", LabelColumnName = "LabelKey" });
+
+            resnet.Fit(data);
+
+            Debug.WriteLine("");
         }
     }
 }

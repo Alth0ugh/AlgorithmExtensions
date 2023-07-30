@@ -1,11 +1,18 @@
 ﻿using Microsoft.ML;
 using Microsoft.ML.Data;
-using Tensorflow;
+using Tensorflow.Keras.Engine;
 
 namespace AlgorithmExtensions.ResNets
 {
-    public class ImageClassificationModelParameters : ITransformer
+    public class ResNetTransformer : ITransformer
     {
+        private IModel _model;
+        
+        internal ResNetTransformer(IModel model)
+        {
+            _model = model;     
+        }
+
         public bool IsRowToRowMapper => throw new NotImplementedException();
 
         public DataViewSchema GetOutputSchema(DataViewSchema inputSchema)
