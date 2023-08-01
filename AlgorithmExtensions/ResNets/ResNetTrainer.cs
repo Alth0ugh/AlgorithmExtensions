@@ -7,6 +7,13 @@ using AlgorithmExtensions.ResNets.Blocks;
 using Microsoft.ML.Data;
 using AlgorithmExtensions.Hyperalgorithms;
 using Tensorflow.NumPy;
+using static Microsoft.ML.DataViewSchema;
+using static Microsoft.ML.SchemaShape.Column;
+using System.Collections.Generic;
+using System.Xml.Linq;
+using System;
+using AlgorithmExtensions.Exceptions;
+using System.Reflection;
 
 namespace AlgorithmExtensions.ResNets
 {
@@ -154,10 +161,20 @@ namespace AlgorithmExtensions.ResNets
         /// Returns the schema of ouput with regards to the input data.
         /// </summary>
         /// <param name="inputSchema">Schema of the input data.</param>
+        /// <exception cref="DependencyException">Thrown when the output schema cannot be created due to some error in dependent library.</exception>
         /// <returns>Output schema.</returns>
         public SchemaShape GetOutputSchema(SchemaShape inputSchema)
         {
-            throw new NotImplementedException();
+            try
+            {
+                var constructor = typeof(SchemaShape.Column).GetConstructor(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance, new Type[] { typeof(string), typeof(VectorKind), typeof(DataViewType), typeof(bool), typeof(SchemaShape) });
+                var predictionColumn = (SchemaShape.Column)constructor.Invoke(new object[] { "Probabilities", VectorKind.Scalar, NumberDataViewType.Single, false, null });
+                return new SchemaShape(new[] { predictionColumn });
+            }
+            catch (Exception ex)
+            {
+                throw new DependencyException("Could not create output schema due to dependency error.", ex);
+            }
         }
     }
 }

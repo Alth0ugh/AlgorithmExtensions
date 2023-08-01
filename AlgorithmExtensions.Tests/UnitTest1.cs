@@ -289,7 +289,6 @@ namespace AlgorithmExtensions.Tests
                 .Append(mlContext.Transforms.Concatenate("Features", "TitleFeaturized", "DescriptionFeaturized"));
 
             var model = mlContext.MulticlassClassification.Trainers.SdcaNonCalibrated();
-
             Debug.WriteLine("");
         }
         /*
@@ -359,6 +358,16 @@ namespace AlgorithmExtensions.Tests
             var transformer = resnet.Fit(data);
 
             mlContext.Model.ConvertToOnnx(transformer, data, new FileStream(@"C:\Users\Oliver\Desktop\model.onnx", FileMode.Create));
+        }
+
+        [Fact]
+        public void TestGetOutputSchema()
+        {
+            var mlContext = new MLContext();
+            var resnet = new ResNetTrainer(new Options() { BatchSize = 30, Epochs = 1, Classes = 22, Architecture = ResNetArchitecture.ResNet18, FeatureColumnName = "Features", LabelColumnName = "LabelKey" }, mlContext);
+
+            var outSchema = resnet.GetOutputSchema(null);
+            Debug.WriteLine("");
         }
     }
 }
