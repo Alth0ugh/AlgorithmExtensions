@@ -26,7 +26,14 @@ namespace AlgorithmExtensions.ResNets
 
         public DataViewSchema GetOutputSchema(DataViewSchema inputSchema)
         {
-            throw new NotImplementedException();
+            var builder = new DataViewSchema.Builder();
+            foreach (var column in inputSchema)
+            {
+                builder.AddColumn(column.Name, column.Type, column.Annotations);
+            }
+
+            builder.AddColumn(_options.PredictedLabelColumnName, NumberDataViewType.Single);
+            return builder.ToSchema();
         }
 
         public IRowToRowMapper GetRowToRowMapper(DataViewSchema inputSchema)

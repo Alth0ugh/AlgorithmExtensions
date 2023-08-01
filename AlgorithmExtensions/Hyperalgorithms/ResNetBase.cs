@@ -135,6 +135,5 @@ namespace AlgorithmExtensions.Hyperalgorithms
 
             return new NDArray(result, new Shape(labels.Count, 7));
         }
-
     }
 }
