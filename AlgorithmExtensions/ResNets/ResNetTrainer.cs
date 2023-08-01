@@ -5,23 +5,25 @@ using Tensorflow.Keras.Engine;
 using AlgorithmExtensions.Extensions;
 using AlgorithmExtensions.ResNets.Blocks;
 using Microsoft.ML.Data;
+using AlgorithmExtensions.Hyperalgorithms;
 using Tensorflow.NumPy;
-using AlgorithmExtensions.Exceptions;
 
 namespace AlgorithmExtensions.ResNets
 {
     /// <summary>
     /// Trainer for ResNet.
     /// </summary>
-    public class ResNetTrainer : IEstimator<ResNetTransformer>
+    public class ResNetTrainer : ResNetBase, IEstimator<ResNetTransformer>
     {
         private Options _options;
         private IModel _model;
+        private MLContext _mlContext;
 
-        public ResNetTrainer(Options options)
+        public ResNetTrainer(Options options, MLContext mlContext)
         {
             _options = options;
             _model = GenerateModel(options.Architecture);
+            _mlContext = mlContext;
         }
 
         /// <summary>
@@ -31,7 +33,7 @@ namespace AlgorithmExtensions.ResNets
         /// <returns>ResNet model.</returns>
         private IModel GenerateModel(ResNetArchitecture architecture)
         {
-            var input = tf.keras.layers.Input(new Shape(224, 224, 3));
+            var input = tf.keras.layers.Input(new Shape(32, 32, 3));
             var conv1 = tf.keras.layers.Conv2D(64,
                 new Shape(7, 7),
                 new Shape(2, 2),
@@ -91,11 +93,14 @@ namespace AlgorithmExtensions.ResNets
 
             var maxPool = tf.keras.layers.GlobalAveragePooling2D().Apply(residual);
             var flatten = tf.keras.layers.Flatten().Apply(maxPool);
-            var dense = tf.keras.layers.Dense(1000).Apply(flatten);
-            var softmax = tf.keras.layers.Dense(_options.Classes).Apply(dense);
+            //var dense = tf.keras.layers.Dense(1000).Apply(flatten);
+            var softmax = tf.keras.layers.Dense(_options.Classes, activation: "softmax").Apply(flatten);
 
             var model = tf.keras.Model(input, softmax);
-            model.compile("adam", "sparse_categorical_crossentropy", new string[] { "accuracy" });
+            model.compile(tf.keras.optimizers.Adam(0.0001f), tf.keras.losses.BinaryCrossentropy(), new string[] { "accuracy" });
+            //model.compile(optimizer: tf.keras.optimizers.RMSprop(1e-3f),
+            //    loss: tf.keras.losses.SparseCategoricalCrossentropy(from_logits: true),
+            //    metrics: new[] { "acc" });
             return model;
         }
 
@@ -118,118 +123,31 @@ namespace AlgorithmExtensions.ResNets
             var x = GetInputData(featureCursor, imageDataGetter) / 255.0f;
 
             _model.fit(x, y, batch_size: _options.BatchSize, epochs: _options.Epochs);
+            var pred = _model.predict(x);
+            GetPredictions(pred);
 
-            return new ResNetTransformer(_model);
+            labelCursor.Dispose();
+            featureCursor.Dispose();
+
+            return new ResNetTransformer(_model, _options, _mlContext);
         }
 
-        /// <summary>
-        /// Loads input images into NDArray.
-        /// </summary>
-        /// <param name="cursor">Cursor pointing to input data.</param>
-        /// <param name="imageDataGetter">Getter for image data.</param>
-        /// <returns>NDArray containg image data.</returns>
-        private NDArray GetInputData(DataViewRowCursor cursor, ValueGetter<MLImage> imageDataGetter)
+        private uint[] GetPredictions(Tensors tensors)
         {
-            var list = new List<byte[,,]>();
-            var width = 0;
-            var height = 0;
-            while (cursor.MoveNext())
+            var count = tensors.shape[0];
+            var predictions = new uint[count];
+            for (int i = 0; i < count; i++)
             {
-                MLImage imageValue = default;
-                imageDataGetter(ref imageValue);
-                width = imageValue.Width;
-                height = imageValue.Height;
-                var pixels = GetPixelsFromImage(imageValue).ToByteArray();
-                list.Add(pixels);
+                predictions[i] = (uint)tensors[i];
             }
 
-            var resultArray = new NDArray(new Shape(list.Count, height, width, 3), TF_DataType.TF_UINT8);
-            
-            for (int i = 0; i < list.Count; i++)
-            {
-                resultArray[i] = list[i];
-            }
-
-            return resultArray;
+            return predictions;
         }
 
-        /// <summary>
-        /// Converts image into pixel array,
-        /// </summary>
-        /// <param name="image">Input image.</param>
-        /// <returns>2D pixel array.</returns>
-        private Pixel[,] GetPixelsFromImage(MLImage image)
+        public ResNetTransformer Fit(NDArray x, NDArray y)
         {
-            var result = new Pixel[image.Height,image.Width];
-            int i = 0;
-            int j = 0;
-            int k = 0;
-
-            while (k < image.Width * image.Height * 4)
-            {
-                result[i,j] = GetPixelFromImage(image, k);
-                if ((j + 1) % image.Width == 0)
-                {
-                    i++;
-                }
-                j = (j + 1) % image.Width;
-                k += 4;
-            }
-
-            return result;
-        }
-
-        /// <summary>
-        /// Returns pixel from byte array representing an image.
-        /// </summary>
-        /// <param name="image">Input image.</param>
-        /// <param name="index">Index in the byte array pointing to the first byte of a pixel.</param>
-        /// <returns>Pixel from the image.</returns>
-        /// <exception cref="UnknownPixelFormatException">Thrown when pixel format of input data is not recognized.</exception>
-        private Pixel GetPixelFromImage(MLImage image, int index)
-        {
-            switch (image.PixelFormat)
-            {
-                case MLPixelFormat.Rgba32:
-                    {
-                        var r = image.Pixels[index];
-                        var g = image.Pixels[index + 1];
-                        var b = image.Pixels[index + 2];
-                        var a = image.Pixels[index + 3];
-                        return new Pixel(r, g, b, a);
-                    }
-                case MLPixelFormat.Bgra32:
-                    {
-                        var b = image.Pixels[index];
-                        var g = image.Pixels[index + 1];
-                        var r = image.Pixels[index + 2];
-                        var a = image.Pixels[index + 3];
-                        return new Pixel(r, g, b, a);
-                    }
-                default:
-                    throw new UnknownPixelFormatException("Pixel format of input images is unknown. Use either RGBA or BGRA."); // TODO
-            }
-        }
-
-        /// <summary>
-        /// Gets labels from input data.
-        /// </summary>
-        /// <param name="cursor">Cursor pointing to input data.</param>
-        /// <param name="labelGetter">Getter for label.</param>
-        /// <returns>1D NDArray containing labels.</returns>
-        private NDArray GetLabels(DataViewRowCursor cursor, ValueGetter<uint> labelGetter)
-        {
-            uint label = default;
-
-            var labels = new List<uint>();
-
-            while (cursor.MoveNext())
-            {
-                labelGetter(ref label);
-                labels.Add(label);
-            }
-
-            return new NDArray(labels.ToArray());
+            _model.fit(x, y, batch_size: _options.BatchSize, epochs: _options.Epochs);
+            return new ResNetTransformer(_model, _options, _mlContext);
         }
 
         /// <summary>

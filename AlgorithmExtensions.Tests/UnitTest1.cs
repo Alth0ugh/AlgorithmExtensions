@@ -12,6 +12,7 @@ using Microsoft.ML.Transforms.Text;
 using Microsoft.ML.Vision;
 using System.Diagnostics;
 using static Microsoft.ML.Transforms.ValueToKeyMappingEstimator;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace AlgorithmExtensions.Tests
 {
@@ -232,8 +233,6 @@ namespace AlgorithmExtensions.Tests
             .Append(mlContext.MulticlassClassification.Trainers.ImageClassification(options));
 
             var a = mlContext.MulticlassClassification.Trainers.ImageClassification(options).Fit(imgData);
-            a.Save
-
             //preprocessingPipeline.Fit(imgData);
             var metrics = mlContext.MulticlassClassification.CrossValidate(imgData, preprocessingPipeline, labelColumnName: "LabelKey");
 
@@ -336,11 +335,30 @@ namespace AlgorithmExtensions.Tests
 
             var data = preprocessingPipeline.Fit(imgData).Transform(imgData);
 
-            var resnet = new ResNetTrainer(new Options() { BatchSize = 30, Epochs = 1, Classes = 22, Architecture = ResNetArchitecture.ResNet18, FeatureColumnName = "Features", LabelColumnName = "LabelKey" });
+            var resnet = new ResNetTrainer(new Options() { BatchSize = 30, Epochs = 10, Classes = 7, Architecture = ResNetArchitecture.ResNet50, FeatureColumnName = "Features", LabelColumnName = "LabelKey" }, mlContext);
 
-            resnet.Fit(data);
+            resnet.Fit(data).Transform(data);
 
             Debug.WriteLine("");
+        }
+
+        [Fact]
+        public void TestSaveResNet()
+        {
+            var mlContext = new MLContext();
+            IEnumerable<ImgData> imgs = LoadImagesFromDirectory(folder: @"C:\Users\Oliver\Desktop\SDNET", useFolderNameAsLabel: true);
+            IDataView imgData = mlContext.Data.LoadFromEnumerable(imgs);
+
+            var preprocessingPipeline = mlContext.Transforms.Conversion.MapValueToKey(inputColumnName: "Label", outputColumnName: "LabelKey")
+                .Append(mlContext.Transforms.LoadImages(outputColumnName: "Features", imageFolder: @"C:\Users\Oliver\Desktop\SDNET", inputColumnName: "ImagePath"));
+
+            var data = preprocessingPipeline.Fit(imgData).Transform(imgData);
+
+            var resnet = new ResNetTrainer(new Options() { BatchSize = 30, Epochs = 1, Classes = 22, Architecture = ResNetArchitecture.ResNet18, FeatureColumnName = "Features", LabelColumnName = "LabelKey" }, mlContext);
+
+            var transformer = resnet.Fit(data);
+
+            mlContext.Model.ConvertToOnnx(transformer, data, new FileStream(@"C:\Users\Oliver\Desktop\model.onnx", FileMode.Create));
         }
     }
 }

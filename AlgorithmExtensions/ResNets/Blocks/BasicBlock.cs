@@ -26,7 +26,7 @@ namespace AlgorithmExtensions.ResNets.Blocks
                 bias_initializer: "zeros",
                 padding: "same").Apply(input);
             x = tf.keras.layers.BatchNormalization().Apply(x);
-            x = tf.keras.activations.Relu.Apply(x);
+            x = tf.keras.layers.LeakyReLU().Apply(x);
             x = tf.keras.layers.Conv2D(filters * 2,
                 kernel_size: new Shape(3, 3),
                 strides: new Shape(1, 1),
@@ -35,7 +35,7 @@ namespace AlgorithmExtensions.ResNets.Blocks
             x = tf.keras.layers.BatchNormalization().Apply(x);
 
             var add = tf.keras.layers.Add().Apply(new Tensors(x, shortcut));
-            var act2 = tf.keras.activations.Relu.Apply(add);
+            var act2 = tf.keras.layers.LeakyReLU().Apply(add);
 
             return act2;
         }
