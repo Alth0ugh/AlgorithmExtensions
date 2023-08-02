@@ -9,6 +9,7 @@ using System.Text.Json;
 using static Tensorflow.Binding;
 using static Tensorflow.KerasApi;
 using RestSharp;
+using AlgorithmExtensions.Exceptions;
 
 namespace AlgorithmExtensions.ResNets
 {
