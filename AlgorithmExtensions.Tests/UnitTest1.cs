@@ -288,7 +288,11 @@ namespace AlgorithmExtensions.Tests
                 .Append(mlContext.Transforms.Text.FeaturizeText(inputColumnName: "Description", outputColumnName: "DescriptionFeaturized"))
                 .Append(mlContext.Transforms.Concatenate("Features", "TitleFeaturized", "DescriptionFeaturized"));
 
-            var model = mlContext.MulticlassClassification.Trainers.SdcaNonCalibrated();
+            data = pipeline.Fit(data).Transform(data);
+
+            var model = (ITransformer)mlContext.MulticlassClassification.Trainers.SdcaNonCalibrated().Fit(data);
+            var rowToRow = model.GetRowToRowMapper(data.Schema);
+
             Debug.WriteLine("");
         }
         /*

@@ -26,6 +26,10 @@ namespace AlgorithmExtensions.ResNets
 
         public DataViewSchema GetOutputSchema(DataViewSchema inputSchema)
         {
+            if (inputSchema == null)
+            {
+                throw new ArgumentException($"Parameter {nameof(inputSchema)} cannot be null");
+            }
             var builder = new DataViewSchema.Builder();
             foreach (var column in inputSchema)
             {
