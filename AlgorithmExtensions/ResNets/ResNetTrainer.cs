@@ -18,13 +18,11 @@ namespace AlgorithmExtensions.ResNets
     {
         private Options _options;
         private IModel _model;
-        private MLContext _mlContext;
 
-        public ResNetTrainer(Options options, MLContext mlContext)
+        public ResNetTrainer(Options options)
         {
             _options = options;
             _model = GenerateModel(options.Architecture);
-            _mlContext = mlContext;
         }
 
         /// <summary>
@@ -130,13 +128,13 @@ namespace AlgorithmExtensions.ResNets
             labelCursor.Dispose();
             featureCursor.Dispose();
 
-            return new ResNetTransformer(_model, _options, _mlContext, input.Schema);
+            return new ResNetTransformer(_model, _options, input.Schema);
         }
 
         public ResNetTransformer Fit(NDArray x, NDArray y)
         {
             _model.fit(x, y, batch_size: _options.BatchSize, epochs: _options.Epochs);
-            return new ResNetTransformer(_model, _options, _mlContext, null);
+            return new ResNetTransformer(_model, _options, null);
         }
 
         /// <summary>

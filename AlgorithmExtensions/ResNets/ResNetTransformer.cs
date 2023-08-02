@@ -6,7 +6,6 @@ using Tensorflow.Keras.Engine;
 using Tensorflow.NumPy;
 using AlgorithmExtensions.Extensions;
 using System.Text.Json;
-using static Tensorflow.Binding;
 using static Tensorflow.KerasApi;
 using AlgorithmExtensions.Exceptions;
 
@@ -22,11 +21,11 @@ namespace AlgorithmExtensions.ResNets
         private MLContext _mlContext;
         public DataViewSchema InputSchema { get; }
 
-        internal ResNetTransformer(IModel model, Options options, MLContext mlContext, DataViewSchema inputSchema)
+        internal ResNetTransformer(IModel model, Options options, DataViewSchema inputSchema)
         {
             _model = model;
             _options = options;
-            _mlContext = mlContext;
+            _mlContext = new MLContext();
             InputSchema = inputSchema;
         }
 
@@ -88,7 +87,7 @@ namespace AlgorithmExtensions.ResNets
         /// <returns>Loaded model.</returns>
         /// <exception cref="IOException">Thrown when any of the model files cannot be read or is not present.</exception>
         /// <exception cref="DeserializationException">Thrown when any of the model files cannot be deserialized.</exception>
-        public static ResNetTransformer Load(MLContext mlContext, string path, string modelName)
+        public static ResNetTransformer Load(string path, string modelName)
         {
             IModel? kerasModel = default;
             DataViewSchema? schema = default;
@@ -128,7 +127,7 @@ namespace AlgorithmExtensions.ResNets
                 throw new DeserializationException(options == null ? "Options could not be deserialized" : "Schema could not be deserialized");
             }
 
-            return new ResNetTransformer(kerasModel, options, mlContext, schema);
+            return new ResNetTransformer(kerasModel, options, schema);
         }
 
         public IDataView Transform(IDataView input)

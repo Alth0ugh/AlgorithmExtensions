@@ -13,9 +13,9 @@ namespace AlgorithmExtensions.Extensions
         /// </summary>
         /// <param name="trainers">Multiclass trainers catalog from MLContext.</param>
         /// <returns>Untrained ResNet.</returns>
-        public static ResNetTrainer ResNetClassificator(this MulticlassClassificationTrainers trainers)
+        public static ResNetTrainer ResNetClassificator(this MulticlassClassificationTrainers trainers, Options options)
         {
-            return null;
+            return new ResNetTrainer(options);
         }
     }
 }

@@ -1,12 +1,11 @@
 ﻿using AlgorithmExtensions.Exceptions;
-using AlgorithmExtensions.ResNets;
 using Microsoft.ML.Data;
 using Microsoft.ML;
 using Tensorflow.NumPy;
 using Tensorflow;
 using AlgorithmExtensions.Extensions;
 
-namespace AlgorithmExtensions.Hyperalgorithms
+namespace AlgorithmExtensions.ResNets
 {
     public class ResNetBase
     {
@@ -119,7 +118,7 @@ namespace AlgorithmExtensions.Hyperalgorithms
 
             var result = new float[labels.Count, 7];
 
-            for(int i = 0; i < labels.Count; i++)
+            for (int i = 0; i < labels.Count; i++)
             {
                 var cls = labels[i];
                 for (int j = 0; j < cls; j++)

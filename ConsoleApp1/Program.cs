@@ -27,7 +27,7 @@ namespace ConsoleApp1
             var data = preprocessingPipeline.Fit(imgData).Transform(imgData);
             var split = mlContext.Data.TrainTestSplit(data, 0.5, seed: 42);
 
-            var resnet = new ResNetTrainer(new Options() { BatchSize = -1, Epochs = 100, Classes = 10, Architecture = ResNetArchitecture.ResNet50, FeatureColumnName = "Features", LabelColumnName = "LabelKey" }, mlContext);
+            var resnet = new ResNetTrainer(new Options() { BatchSize = -1, Epochs = 100, Classes = 10, Architecture = ResNetArchitecture.ResNet50, FeatureColumnName = "Features", LabelColumnName = "LabelKey" });
 
             var ((x_train, y_train), (x_test, y_test)) = keras.datasets.cifar10.load_data();
             x_train = x_train / 255.0f;

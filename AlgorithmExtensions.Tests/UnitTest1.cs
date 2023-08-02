@@ -338,7 +338,7 @@ namespace AlgorithmExtensions.Tests
 
             var data = preprocessingPipeline.Fit(imgData).Transform(imgData);
 
-            var resnet = new ResNetTrainer(new Options() { BatchSize = 30, Epochs = 10, Classes = 7, Architecture = ResNetArchitecture.ResNet50, FeatureColumnName = "Features", LabelColumnName = "LabelKey" }, mlContext);
+            var resnet = new ResNetTrainer(new Options() { BatchSize = 30, Epochs = 10, Classes = 7, Architecture = ResNetArchitecture.ResNet50, FeatureColumnName = "Features", LabelColumnName = "LabelKey" });
 
             resnet.Fit(data).Transform(data);
 
@@ -357,7 +357,7 @@ namespace AlgorithmExtensions.Tests
 
             var data = preprocessingPipeline.Fit(imgData).Transform(imgData);
 
-            var resnet = new ResNetTrainer(new Options() { BatchSize = 30, Epochs = 1, Classes = 22, Architecture = ResNetArchitecture.ResNet18, FeatureColumnName = "Features", LabelColumnName = "LabelKey" }, mlContext);
+            var resnet = new ResNetTrainer(new Options() { BatchSize = 30, Epochs = 1, Classes = 22, Architecture = ResNetArchitecture.ResNet18, FeatureColumnName = "Features", LabelColumnName = "LabelKey" });
 
             var transformer = resnet.Fit(data);
 
@@ -368,7 +368,7 @@ namespace AlgorithmExtensions.Tests
         public void TestGetOutputSchema()
         {
             var mlContext = new MLContext();
-            var resnet = new ResNetTrainer(new Options() { BatchSize = 30, Epochs = 1, Classes = 22, Architecture = ResNetArchitecture.ResNet18, FeatureColumnName = "Features", LabelColumnName = "LabelKey" }, mlContext);
+            var resnet = new ResNetTrainer(new Options() { BatchSize = 30, Epochs = 1, Classes = 22, Architecture = ResNetArchitecture.ResNet18, FeatureColumnName = "Features", LabelColumnName = "LabelKey" });
 
             var outSchema = resnet.GetOutputSchema(null);
             Debug.WriteLine("");
