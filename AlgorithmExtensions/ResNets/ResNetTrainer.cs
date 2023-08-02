@@ -130,8 +130,6 @@ namespace AlgorithmExtensions.ResNets
             var x = GetInputData(featureCursor, imageDataGetter) / 255.0f;
 
             _model.fit(x, y, batch_size: _options.BatchSize, epochs: _options.Epochs);
-            var pred = _model.predict(x);
-            GetPredictions(pred);
 
             labelCursor.Dispose();
             featureCursor.Dispose();

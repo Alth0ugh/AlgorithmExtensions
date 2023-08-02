@@ -1,11 +1,10 @@
 ﻿using AlgorithmExtensions.Hyperalgorithms;
 using Microsoft.ML;
 using Microsoft.ML.Data;
-using System.Security;
 using Tensorflow;
-using System.Linq;
 using Tensorflow.Keras.Engine;
 using Tensorflow.NumPy;
+using AlgorithmExtensions.Extensions;
 
 namespace AlgorithmExtensions.ResNets
 {
@@ -42,12 +41,17 @@ namespace AlgorithmExtensions.ResNets
 
         public IRowToRowMapper GetRowToRowMapper(DataViewSchema inputSchema)
         {
-            throw new NotImplementedException();
+            return new ResNetMapper(this, _options);
         }
 
         public void Save(ModelSaveContext ctx)
         {
-            throw new NotImplementedException();
+            Save(Directory.GetCurrentDirectory());
+        }
+
+        public void Save(string path)
+        {
+            _model.save(path);
         }
 
         public IDataView Transform(IDataView input)
@@ -69,10 +73,21 @@ namespace AlgorithmExtensions.ResNets
 
         public IDataView Transform(NDArray x)
         {
-            
             var modelPrediction = _model.predict(x);
             var predictions = GetPredictions(modelPrediction);
 
+            var result = predictions.Select(x => new ModelPrediction() { Prediction = x });
+
+            return _mlContext.Data.LoadFromEnumerable(result);
+        }
+
+        public IDataView Transform(MLImage image)
+        {
+            var pixels = GetPixelsFromImage(image).ToByteArray();
+            var x = new NDArray(new Shape(1, image.Height, image.Width), TF_DataType.TF_UINT8);
+            x[0] = pixels;
+            x /= 255.0f;
+            var predictions = GetPredictions(_model.predict(x));
             var result = predictions.Select(x => new ModelPrediction() { Prediction = x });
 
             return _mlContext.Data.LoadFromEnumerable(result);
