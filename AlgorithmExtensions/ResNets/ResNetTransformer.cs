@@ -5,9 +5,12 @@ using Tensorflow;
 using Tensorflow.Keras.Engine;
 using Tensorflow.NumPy;
 using AlgorithmExtensions.Extensions;
-using System.Text.Json;
 using static Tensorflow.KerasApi;
+using static Tensorflow.Binding;
 using AlgorithmExtensions.Exceptions;
+using Newtonsoft.Json;
+using SkiaSharp;
+using Tensorflow.Operations.Initializers;
 
 namespace AlgorithmExtensions.ResNets
 {
@@ -54,6 +57,7 @@ namespace AlgorithmExtensions.ResNets
 
         public void Save(ModelSaveContext ctx)
         {
+            throw new NotImplementedException();
             Save(Directory.GetCurrentDirectory(), "model");
         }
 
@@ -64,13 +68,21 @@ namespace AlgorithmExtensions.ResNets
         /// <exception cref="IOException">Thrown when the model is saved unsucessfully.</exception>
         public void Save(string path, string modelName)
         {
+            throw new NotImplementedException();
             try
             {
-                _model.save(Path.Combine(path, modelName + ".keras"));
-                var serializedSchema = JsonSerializer.Serialize(InputSchema);
-                var serializedOptions = JsonSerializer.Serialize(_options);
-                File.WriteAllText(Path.Combine(path, modelName + ".input"), serializedSchema);
-                File.WriteAllText(Path.Combine(path, modelName + ".options"), serializedOptions);
+                _model.save(Path.Combine(path, modelName));
+                var serializer = new JsonSerializer();
+                var modelStream = new StreamWriter(Path.Combine(path, modelName + ".model"));
+                var schemaStream = new StreamWriter(Path.Combine(path, modelName + ".input"));
+                var optionsStream = new StreamWriter(Path.Combine(path, modelName + ".options"));
+
+                serializer.Serialize(modelStream, _model);
+                serializer.Serialize(schemaStream, InputSchema);
+                serializer.Serialize(optionsStream, _options);
+
+                schemaStream.Dispose();
+                optionsStream.Dispose();
             }
             catch (Exception ex)
             {
@@ -89,13 +101,16 @@ namespace AlgorithmExtensions.ResNets
         /// <exception cref="DeserializationException">Thrown when any of the model files cannot be deserialized.</exception>
         public static ResNetTransformer Load(string path, string modelName)
         {
+            throw new NotImplementedException();
             IModel? kerasModel = default;
             DataViewSchema? schema = default;
             Options? options = default;
 
             try
             {
-                kerasModel = keras.models.load_model(Path.Combine(path, modelName + ".keras"));
+                var loadOptions = new LoadOptions();
+                loadOptions.experimental_variable_policy = VariablePolicy.SAVE_VARIABLE_DEVICES;
+                kerasModel = tf.keras.models.load_model(Path.Combine(path, modelName), true, loadOptions);
             }
             catch (Exception ex)
             {
@@ -105,7 +120,7 @@ namespace AlgorithmExtensions.ResNets
             try
             {
                 var schemaJson = File.ReadAllText(Path.Combine(path, modelName + ".input"));
-                schema = JsonSerializer.Deserialize<DataViewSchema>(schemaJson);
+                //schema = JsonSerializer.Deserialize<DataViewSchema>(schemaJson);
             }
             catch (Exception ex)
             {
@@ -115,7 +130,7 @@ namespace AlgorithmExtensions.ResNets
             try
             {
                 var optionsJson = File.ReadAllText(Path.Combine(path, modelName + ".options"));
-                options = JsonSerializer.Deserialize<Options>(optionsJson);
+                //ptions = JsonSerializer.Deserialize<Options>(optionsJson);
             }
             catch (Exception ex)
             {

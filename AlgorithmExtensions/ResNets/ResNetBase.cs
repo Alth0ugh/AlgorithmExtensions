@@ -104,7 +104,7 @@ namespace AlgorithmExtensions.ResNets
         /// <param name="cursor">Cursor pointing to input data.</param>
         /// <param name="labelGetter">Getter for label.</param>
         /// <returns>1D NDArray containing labels.</returns>
-        private protected NDArray GetLabels(DataViewRowCursor cursor, ValueGetter<uint> labelGetter)
+        private protected NDArray GetLabels(DataViewRowCursor cursor, ValueGetter<uint> labelGetter, int numberOfClasses)
         {
             uint label = default;
 
@@ -116,7 +116,7 @@ namespace AlgorithmExtensions.ResNets
                 labels.Add(label);
             }
 
-            var result = new float[labels.Count, 7];
+            var result = new float[labels.Count, numberOfClasses];
 
             for (int i = 0; i < labels.Count; i++)
             {
@@ -126,7 +126,7 @@ namespace AlgorithmExtensions.ResNets
                     result[i, j] = 0;
                 }
                 result[i, cls] = 1;
-                for (int j = (int)(cls + 1); j < 7; j++)
+                for (int j = (int)(cls + 1); j < numberOfClasses; j++)
                 {
                     result[i, j] = 0;
                 }

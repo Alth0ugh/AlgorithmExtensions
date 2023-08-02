@@ -117,7 +117,7 @@ namespace AlgorithmExtensions.ResNets
 
             var labelCursor = input.GetRowCursor(new[] { labelColumn });
             var labelGetter = labelCursor.GetGetter<uint>(labelColumn);
-            var y = GetLabels(labelCursor, labelGetter);
+            var y = GetLabels(labelCursor, labelGetter, _options.Classes);
 
             var featureCursor = input.GetRowCursor(new[] { featureColumn });
             var imageDataGetter = featureCursor.GetGetter<MLImage>(featureColumn);
