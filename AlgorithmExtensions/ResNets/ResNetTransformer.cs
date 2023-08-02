@@ -8,7 +8,6 @@ using AlgorithmExtensions.Extensions;
 using System.Text.Json;
 using static Tensorflow.Binding;
 using static Tensorflow.KerasApi;
-using RestSharp;
 using AlgorithmExtensions.Exceptions;
 
 namespace AlgorithmExtensions.ResNets
@@ -80,6 +79,15 @@ namespace AlgorithmExtensions.ResNets
             }
         }
 
+        /// <summary>
+        /// Load model.
+        /// </summary>
+        /// <param name="mlContext">Machine learning context.</param>
+        /// <param name="path">Path to folder where the model files are stored.</param>
+        /// <param name="modelName">Name of the model without the extension.</param>
+        /// <returns>Loaded model.</returns>
+        /// <exception cref="IOException">Thrown when any of the model files cannot be read or is not present.</exception>
+        /// <exception cref="DeserializationException">Thrown when any of the model files cannot be deserialized.</exception>
         public static ResNetTransformer Load(MLContext mlContext, string path, string modelName)
         {
             IModel? kerasModel = default;

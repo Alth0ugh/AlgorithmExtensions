@@ -1,5 +1,4 @@
 ﻿using AlgorithmExtensions.Exceptions;
-using AlgorithmExtensions.Hyperalgorithms;
 using Microsoft.ML;
 using Microsoft.ML.Data;
 using System.Data;

@@ -5,7 +5,6 @@ using Tensorflow.Keras.Engine;
 using AlgorithmExtensions.Extensions;
 using AlgorithmExtensions.ResNets.Blocks;
 using Microsoft.ML.Data;
-using AlgorithmExtensions.Hyperalgorithms;
 using Tensorflow.NumPy;
 using static Microsoft.ML.SchemaShape.Column;
 using AlgorithmExtensions.Exceptions;
