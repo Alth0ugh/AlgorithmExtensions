@@ -1,6 +1,4 @@
-﻿using System.Runtime.Serialization;
-
-namespace AlgorithmExtensions.ResNets
+﻿namespace AlgorithmExtensions.Exceptions
 {
     [Serializable]
     internal class DeserializationException : Exception
