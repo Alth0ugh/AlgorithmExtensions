@@ -5,6 +5,10 @@ using Tensorflow;
 using Tensorflow.Keras.Engine;
 using Tensorflow.NumPy;
 using AlgorithmExtensions.Extensions;
+using System.Text.Json;
+using static Tensorflow.Binding;
+using static Tensorflow.KerasApi;
+using RestSharp;
 
 namespace AlgorithmExtensions.ResNets
 {
@@ -51,16 +55,71 @@ namespace AlgorithmExtensions.ResNets
 
         public void Save(ModelSaveContext ctx)
         {
-            Save(Directory.GetCurrentDirectory());
+            Save(Directory.GetCurrentDirectory(), "model");
         }
 
         /// <summary>
         /// Saves model to a given path.
         /// </summary>
         /// <param name="path">Path to save the model.</param>
-        public void Save(string path)
+        /// <exception cref="IOException">Thrown when the model is saved unsucessfully.</exception>
+        public void Save(string path, string modelName)
         {
-            _model.save(path);
+            try
+            {
+                _model.save(Path.Combine(path, modelName + ".keras"));
+                var serializedSchema = JsonSerializer.Serialize(InputSchema);
+                var serializedOptions = JsonSerializer.Serialize(_options);
+                File.WriteAllText(Path.Combine(path, modelName + ".input"), serializedSchema);
+                File.WriteAllText(Path.Combine(path, modelName + ".options"), serializedOptions);
+            }
+            catch (Exception ex)
+            {
+                throw new IOException("Model could not be saved in the given path. See inner exception.", ex);
+            }
+        }
+
+        public static ResNetTransformer Load(MLContext mlContext, string path, string modelName)
+        {
+            IModel? kerasModel = default;
+            DataViewSchema? schema = default;
+            Options? options = default;
+
+            try
+            {
+                kerasModel = keras.models.load_model(Path.Combine(path, modelName + ".keras"));
+            }
+            catch (Exception ex)
+            {
+                throw new IOException("Error while loading model with .keras extension. See inner exception", ex);
+            }
+
+            try
+            {
+                var schemaJson = File.ReadAllText(Path.Combine(path, modelName + ".input"));
+                schema = JsonSerializer.Deserialize<DataViewSchema>(schemaJson);
+            }
+            catch (Exception ex)
+            {
+                throw new IOException("Schema with .input extension could not be loaded or deserialized. See inner exception.", ex);
+            }
+
+            try
+            {
+                var optionsJson = File.ReadAllText(Path.Combine(path, modelName + ".options"));
+                options = JsonSerializer.Deserialize<Options>(optionsJson);
+            }
+            catch (Exception ex)
+            {
+                throw new IOException("Options with .options extension could not be loaded or deserialized. See inner exception.", ex);
+            }
+
+            if (options == null || schema == null)
+            {
+                throw new DeserializationException(options == null ? "Options could not be deserialized" : "Schema could not be deserialized");
+            }
+
+            return new ResNetTransformer(kerasModel, options, mlContext, schema);
         }
 
         public IDataView Transform(IDataView input)
