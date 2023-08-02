@@ -11,9 +11,9 @@ namespace AlgorithmExtensions.ResNets
     /// </summary>
     public class ResNetMapper : ResNetBase, IRowToRowMapper
     {
-        public DataViewSchema InputSchema => throw new NotImplementedException();
+        public DataViewSchema InputSchema => _model.InputSchema;
 
-        public DataViewSchema OutputSchema => throw new NotImplementedException();
+        public DataViewSchema OutputSchema => _model.GetOutputSchema(InputSchema);
         
         private readonly ResNetTransformer _model;
         private readonly Options _options;
