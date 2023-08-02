@@ -7,13 +7,8 @@ using AlgorithmExtensions.ResNets.Blocks;
 using Microsoft.ML.Data;
 using AlgorithmExtensions.Hyperalgorithms;
 using Tensorflow.NumPy;
-using static Microsoft.ML.DataViewSchema;
 using static Microsoft.ML.SchemaShape.Column;
-using System.Collections.Generic;
-using System.Xml.Linq;
-using System;
 using AlgorithmExtensions.Exceptions;
-using System.Reflection;
 
 namespace AlgorithmExtensions.ResNets
 {
@@ -96,6 +91,8 @@ namespace AlgorithmExtensions.ResNets
                             .StackResidualBlocks(block, 512, new Shape(2, 2), 3);
                         break;
                     }
+                default:
+                    throw new UnknownArchitectureException("The given ResNet architecture is unknown.");
             }
 
             var maxPool = tf.keras.layers.GlobalAveragePooling2D().Apply(residual);
@@ -115,7 +112,7 @@ namespace AlgorithmExtensions.ResNets
         /// Fits the model.
         /// </summary>
         /// <param name="input">Data to fit the model on.</param>
-        /// <returns></returns>
+        /// <returns>Trained transformer.</returns>
         public ResNetTransformer Fit(IDataView input)
         {
             var featureColumn = input.Schema[_options.FeatureColumnName];
@@ -134,25 +131,13 @@ namespace AlgorithmExtensions.ResNets
             labelCursor.Dispose();
             featureCursor.Dispose();
 
-            return new ResNetTransformer(_model, _options, _mlContext);
-        }
-
-        private uint[] GetPredictions(Tensors tensors)
-        {
-            var count = tensors.shape[0];
-            var predictions = new uint[count];
-            for (int i = 0; i < count; i++)
-            {
-                predictions[i] = (uint)tensors[i];
-            }
-
-            return predictions;
+            return new ResNetTransformer(_model, _options, _mlContext, input.Schema);
         }
 
         public ResNetTransformer Fit(NDArray x, NDArray y)
         {
             _model.fit(x, y, batch_size: _options.BatchSize, epochs: _options.Epochs);
-            return new ResNetTransformer(_model, _options, _mlContext);
+            return new ResNetTransformer(_model, _options, _mlContext, null);
         }
 
         /// <summary>

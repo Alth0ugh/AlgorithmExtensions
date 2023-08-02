@@ -8,20 +8,25 @@ using AlgorithmExtensions.Extensions;
 
 namespace AlgorithmExtensions.ResNets
 {
+    /// <summary>
+    /// Transformer based on trained ResNet.
+    /// </summary>
     public class ResNetTransformer : ResNetBase, ITransformer
     {
         private IModel _model;
         private Options _options;
         private MLContext _mlContext;
+        public DataViewSchema InputSchema { get; }
 
-        internal ResNetTransformer(IModel model, Options options, MLContext mlContext)
+        internal ResNetTransformer(IModel model, Options options, MLContext mlContext, DataViewSchema inputSchema)
         {
             _model = model;
             _options = options;
             _mlContext = mlContext;
+            InputSchema = inputSchema;
         }
 
-        public bool IsRowToRowMapper => throw new NotImplementedException();
+        public bool IsRowToRowMapper => true;
 
         public DataViewSchema GetOutputSchema(DataViewSchema inputSchema)
         {
@@ -49,6 +54,10 @@ namespace AlgorithmExtensions.ResNets
             Save(Directory.GetCurrentDirectory());
         }
 
+        /// <summary>
+        /// Saves model to a given path.
+        /// </summary>
+        /// <param name="path">Path to save the model.</param>
         public void Save(string path)
         {
             _model.save(path);
@@ -71,6 +80,11 @@ namespace AlgorithmExtensions.ResNets
             return _mlContext.Data.LoadFromEnumerable(result);
         }
 
+        /// <summary>
+        /// Take the data in, make transformations, output the data.
+        /// </summary>
+        /// <param name="x">NDArray containing the input data.</param>
+        /// <returns>Transformed data.</returns>
         public IDataView Transform(NDArray x)
         {
             var modelPrediction = _model.predict(x);
@@ -81,6 +95,11 @@ namespace AlgorithmExtensions.ResNets
             return _mlContext.Data.LoadFromEnumerable(result);
         }
 
+        /// <summary>
+        /// Take the data in, make transformations, output the data.
+        /// </summary>
+        /// <param name="image">Image that should be classified.</param>
+        /// <returns>DataView containing the classification result.</returns>
         public IDataView Transform(MLImage image)
         {
             var pixels = GetPixelsFromImage(image).ToByteArray();

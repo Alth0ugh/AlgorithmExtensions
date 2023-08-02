@@ -1,16 +1,14 @@
 ﻿using AlgorithmExtensions.Exceptions;
-using AlgorithmExtensions.Extensions;
 using AlgorithmExtensions.Hyperalgorithms;
 using Microsoft.ML;
 using Microsoft.ML.Data;
 using System.Data;
-using Tensorflow;
-using Tensorflow.Keras.Engine;
-using Tensorflow.NumPy;
-using static Tensorflow.Binding;
 
 namespace AlgorithmExtensions.ResNets
 {
+    /// <summary>
+    /// Row to row mapper for ResNet.
+    /// </summary>
     public class ResNetMapper : ResNetBase, IRowToRowMapper
     {
         public DataViewSchema InputSchema => throw new NotImplementedException();
@@ -20,7 +18,7 @@ namespace AlgorithmExtensions.ResNets
         private readonly ResNetTransformer _model;
         private readonly Options _options;
 
-        public ResNetMapper(ResNetTransformer model, Options options)
+        internal ResNetMapper(ResNetTransformer model, Options options)
         {
             _model = model;
             _options = options;
