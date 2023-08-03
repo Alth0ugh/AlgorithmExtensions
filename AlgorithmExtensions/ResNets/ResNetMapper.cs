@@ -40,16 +40,17 @@ namespace AlgorithmExtensions.ResNets
 
         public DataViewRow GetRow(DataViewRow input, IEnumerable<DataViewSchema.Column> activeColumns)
         {
-            var featureColumn = from column in activeColumns
-                                where column.Name == _options.FeatureColumnName
-                                select column;
+            var dependencies = GetDependencies(input.Schema);
+            var activeDependencyColumns = from column in activeColumns
+                                          where dependencies.ElementAt(0).Name == column.Name
+                                          select column;
 
-            if (featureColumn.Count() != 1)
+            if (activeDependencyColumns.Count() != 1)
             {
-                throw new MissingColumnException($"Column with name {_options.FeatureColumnName} is missing from the input.");
+                throw new MissingColumnException($"Column {dependencies.ElementAt(0)} is missing from {nameof(activeColumns)}");
             }
-            
-            var featureGetter = input.GetGetter<MLImage>(featureColumn.ElementAt(0));
+
+            var featureGetter = input.GetGetter<MLImage>(dependencies.ElementAt(0));
 
             MLImage image = null;
 

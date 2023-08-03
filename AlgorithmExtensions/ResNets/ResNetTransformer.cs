@@ -52,6 +52,13 @@ namespace AlgorithmExtensions.ResNets
 
         public IRowToRowMapper GetRowToRowMapper(DataViewSchema inputSchema)
         {
+            var featureColumn = from column in inputSchema
+                      where column.Name == _options.FeatureColumnName
+                      select column;
+            if (featureColumn.Count() == 0)
+            {
+                throw new MissingColumnException($"{nameof(inputSchema)} does not containt column named {_options.FeatureColumnName}");
+            }
             return new ResNetMapper(this, _options);
         }
 
@@ -185,7 +192,7 @@ namespace AlgorithmExtensions.ResNets
         public IDataView Transform(MLImage image)
         {
             var pixels = GetPixelsFromImage(image).ToByteArray();
-            var x = new NDArray(new Shape(1, image.Height, image.Width), TF_DataType.TF_UINT8);
+            var x = new NDArray(new Shape(1, image.Height, image.Width, 3), TF_DataType.TF_UINT8);
             x[0] = pixels;
             x /= 255.0f;
             var predictions = GetPredictions(_model.predict(x));
