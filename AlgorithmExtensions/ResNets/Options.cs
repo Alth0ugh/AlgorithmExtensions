@@ -27,5 +27,6 @@ namespace AlgorithmExtensions.ResNets
         public string FeatureColumnName { get; set; } = "Features";
         public int BatchSize { get; set; }
         public int Epochs { get; set; }
+        public float LearningRate { get; set; } = 0.0001f;
     }
 }

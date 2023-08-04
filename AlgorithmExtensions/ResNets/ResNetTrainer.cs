@@ -19,6 +19,9 @@ namespace AlgorithmExtensions.ResNets
         private Options _options;
         private IModel _model;
 
+        private const string _checkInputColumnsColumnMissingError = "Column named {0} is missing from the input";
+        private const string _checkInputColumnsTypeMismatchError = "Expected type {0} for {1} but got {2}";
+
         public ResNetTrainer(Options options)
         {
             _options = options;
@@ -94,14 +97,10 @@ namespace AlgorithmExtensions.ResNets
 
             var maxPool = tf.keras.layers.GlobalAveragePooling2D().Apply(residual);
             var flatten = tf.keras.layers.Flatten().Apply(maxPool);
-            //var dense = tf.keras.layers.Dense(1000).Apply(flatten);
             var softmax = tf.keras.layers.Dense(_options.Classes, activation: "softmax").Apply(flatten);
 
             var model = tf.keras.Model(input, softmax);
-            model.compile(tf.keras.optimizers.Adam(0.0001f), tf.keras.losses.BinaryCrossentropy(), new string[] { "accuracy" });
-            //model.compile(optimizer: tf.keras.optimizers.RMSprop(1e-3f),
-            //    loss: tf.keras.losses.SparseCategoricalCrossentropy(from_logits: true),
-            //    metrics: new[] { "acc" });
+            model.compile(tf.keras.optimizers.Adam(_options.LearningRate), tf.keras.losses.BinaryCrossentropy(), new string[] { "accuracy" });
             return model;
         }
 
@@ -110,8 +109,12 @@ namespace AlgorithmExtensions.ResNets
         /// </summary>
         /// <param name="input">Data to fit the model on.</param>
         /// <returns>Trained transformer.</returns>
+        /// <exception cref="MissingColumnException">Thrown when a column is missing from the input data.</exception>
+        /// <exception cref="TypeMismatchException">Thrown when the expected data type of a column is different from expected data type.</exception>
         public ResNetTransformer Fit(IDataView input)
         {
+            CheckInputColumns(input);
+
             var featureColumn = input.Schema[_options.FeatureColumnName];
             var labelColumn = input.Schema[_options.LabelColumnName];
 
@@ -131,6 +134,42 @@ namespace AlgorithmExtensions.ResNets
             return new ResNetTransformer(_model, _options, input.Schema);
         }
 
+        /// <summary>
+        /// Checks if the input columns are present and in correct data type.
+        /// </summary>
+        /// <param name="input">Input data.</param>
+        /// <exception cref="MissingColumnException">Thrown when a column is missing from the input data.</exception>
+        /// <exception cref="TypeMismatchException">Thrown when the expected data type of a column is different from expected data type.</exception>
+        private void CheckInputColumns(IDataView input)
+        {
+            var featureColumn = from column in input.Schema
+                                      where column.Name == _options.FeatureColumnName
+                                      select column;
+            var labelColumn = from column in input.Schema
+                                    where column.Name == _options.LabelColumnName
+                                    select column;
+
+            var featureColumnCount = featureColumn.Count();
+            var labelColumnCount = labelColumn.Count();
+            if (featureColumnCount == 0 || labelColumnCount == 0)
+            {
+                throw new MissingColumnException(featureColumnCount == 0 ? string.Format(_checkInputColumnsColumnMissingError, _options.FeatureColumnName) :
+                    string.Format(_checkInputColumnsColumnMissingError, _options.LabelColumnName));
+            }
+
+            var featureColumnInstance = featureColumn.Single();
+            if (featureColumnInstance.Type.RawType != typeof(MLImage))
+            {
+                throw new TypeMismatchException(string.Format(_checkInputColumnsTypeMismatchError, typeof(MLImage), _options.FeatureColumnName, featureColumnInstance.Type.RawType));
+            }
+
+            var labelColumnInstance = labelColumn.Single();
+            if (labelColumnInstance.Type.RawType != typeof(uint))
+            {
+                throw new TypeMismatchException(string.Format(_checkInputColumnsTypeMismatchError, typeof(MLImage), _options.LabelColumnName, labelColumnInstance.Type.RawType));
+            }
+        }
+
         public ResNetTransformer Fit(NDArray x, NDArray y)
         {
             _model.fit(x, y, batch_size: _options.BatchSize, epochs: _options.Epochs);
@@ -147,7 +186,7 @@ namespace AlgorithmExtensions.ResNets
         {
             try
             {
-                var constructor = typeof(SchemaShape.Column).GetConstructor(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance, new Type[] { typeof(string), typeof(VectorKind), typeof(DataViewType), typeof(bool), typeof(SchemaShape) });
+                var constructor = typeof(SchemaShape.Column).GetConstructor(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance, new Type[] { typeof(string), typeof(VectorKind), typeof(DataViewType), typeof(bool), typeof(SchemaShape) })!;
                 var predictionColumn = (SchemaShape.Column)constructor.Invoke(new object[] { "Prediction", VectorKind.Scalar, NumberDataViewType.Single, false, null });
                 return new SchemaShape(new[] { predictionColumn });
             }

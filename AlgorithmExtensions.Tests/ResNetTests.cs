@@ -206,37 +206,6 @@ namespace AlgorithmExtensions.Tests
             Assert.Throws<MissingColumnException>(() => transformer.GetRowToRowMapper(imgData.Schema));
         }
 
-        /*
-        [Fact]
-        public void TestResNetFunctions()
-        {
-            var mlContext = new MLContext();
-            IEnumerable<ImgData> imgs = LoadImagesFromDirectory(folder: @"C:\Users\Oliver\Desktop\SDNET", useFolderNameAsLabel: true);
-            IDataView imgData = mlContext.Data.LoadFromEnumerable(imgs);
-
-            var preprocessingPipeline = mlContext.Transforms.Conversion.MapValueToKey(inputColumnName: "Label", outputColumnName: "LabelKey")
-                .Append(mlContext.Transforms.LoadImages(outputColumnName: "Features", imageFolder: @"C:\Users\Oliver\Desktop\SDNET", inputColumnName: "ImagePath"));
-
-            var data = preprocessingPipeline.Fit(imgData).Transform(imgData);
-
-            var resnet = new ResNetTrainer(new Options() { BatchSize = 5, Epochs = 5 });
-
-            var featureColumn = data.Schema["Features"];
-            var labelColumn = data.Schema["LabelKey"];
-
-            var cursor1 = data.GetRowCursor(new[] { featureColumn, labelColumn });
-            var cursor2 = data.GetRowCursor(new[] { featureColumn, labelColumn });
-
-            var imageDataGetter = cursor1.GetGetter<MLImage>(featureColumn);
-            var labelGetter = cursor2.GetGetter<uint>(labelColumn);
-
-            var result = resnet.GetInputData2(cursor1, imageDataGetter);
-
-            var result2 = resnet.GetLabels(cursor2, labelGetter);
-
-            Debug.WriteLine("");
-        }
-        */
         [Fact]
         public void Fit_Transform_ResNet50_ShouldSucceed()
         {
@@ -290,6 +259,32 @@ namespace AlgorithmExtensions.Tests
                 Assert.Fail("Column Prediction is not present in the output schema.");
             }
             Assert.True(data.Schema.Count == outputSchema.Count - 1);
+        }
+
+        [Fact]
+        public void Fit_Transform_ResNet50WithIncorrectColumnName_ShouldThrowException()
+        {
+            var mlContext = new MLContext();
+
+            var data = GetInputData(mlContext);
+            var options = new Options() { BatchSize = 30, Epochs = 1, Classes = 7, Architecture = ResNetArchitecture.ResNet50, FeatureColumnName = "MissingFeatures", LabelColumnName = "LabelKey" };
+
+            var resnet = mlContext.MulticlassClassification.Trainers.ResNetClassificator(options);
+
+            Assert.Throws<MissingColumnException>(() => resnet.Fit(data));
+        }
+
+        [Fact]
+        public void Fit_Transform_ResNet50WithIncorrectFeatureDataType_ShouldThrowException()
+        {
+            var mlContext = new MLContext();
+
+            var data = GetInputData(mlContext);
+            var options = new Options() { BatchSize = 30, Epochs = 1, Classes = 7, Architecture = ResNetArchitecture.ResNet50, FeatureColumnName = "ImagePath", LabelColumnName = "LabelKey" };
+
+            var resnet = mlContext.MulticlassClassification.Trainers.ResNetClassificator(options);
+
+            Assert.Throws<TypeMismatchException>(() => resnet.Fit(data));
         }
     }
 }
