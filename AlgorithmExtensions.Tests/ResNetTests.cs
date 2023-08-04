@@ -265,7 +265,29 @@ namespace AlgorithmExtensions.Tests
             }
             catch
             {
-                Assert.Fail("Columns Prediction or Scores are not present in the output schema.");
+                Assert.Fail("Column Prediction is not present in the output schema.");
+            }
+            Assert.True(data.Schema.Count == outputSchema.Count - 1);
+        }
+
+        [Fact]
+        public void GetOutputSchema_ResnetTrainer_ShouldSucceed()
+        {
+            var mlContext = new MLContext();
+
+            var data = GetInputData(mlContext);
+            var resnet = GetResnet(mlContext);
+
+            var transformer = resnet.Fit(data);
+            var outputSchema = transformer.GetOutputSchema(data.Schema);
+
+            try
+            {
+                _ = outputSchema["Prediction"];
+            }
+            catch
+            {
+                Assert.Fail("Column Prediction is not present in the output schema.");
             }
             Assert.True(data.Schema.Count == outputSchema.Count - 1);
         }

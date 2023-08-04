@@ -148,7 +148,7 @@ namespace AlgorithmExtensions.ResNets
             try
             {
                 var constructor = typeof(SchemaShape.Column).GetConstructor(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance, new Type[] { typeof(string), typeof(VectorKind), typeof(DataViewType), typeof(bool), typeof(SchemaShape) });
-                var predictionColumn = (SchemaShape.Column)constructor.Invoke(new object[] { "Probabilities", VectorKind.Scalar, NumberDataViewType.Single, false, null });
+                var predictionColumn = (SchemaShape.Column)constructor.Invoke(new object[] { "Prediction", VectorKind.Scalar, NumberDataViewType.Single, false, null });
                 return new SchemaShape(new[] { predictionColumn });
             }
             catch (Exception ex)

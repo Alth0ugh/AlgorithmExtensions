@@ -1,6 +1,9 @@
 ﻿namespace AlgorithmExtensions.Exceptions
 {
-    internal class DependencyException : Exception
+    /// <summary>
+    /// Thrown when dependend library for operation raises an exception.
+    /// </summary>
+    public class DependencyException : Exception
     {
         public DependencyException() : base() { }
         public DependencyException(string message) : base(message) { }
