@@ -121,6 +121,8 @@ namespace AlgorithmExtensions.Hyperalgorithms
         /// <returns>Task representing training of the model.</returns>
         public async Task Fit(IDataView data)
         {
+            CheckParameters();
+
             var pipelines = GenerateParameterCombinations().ToArray();
             var tasks = new Task<float>[pipelines.Length];
 
@@ -141,6 +143,22 @@ namespace AlgorithmExtensions.Hyperalgorithms
 
             BestEstimator = GenerateEstimatorChain(pipelines[bestEstimator]);
             //BestParameters = pipelines[bestEstimator];
+        }
+
+        private void CheckParameters()
+        {
+            if (_parameters.Count == 0)
+            {
+                throw new ParametersMissingException($"No parameters were given to {nameof(GridSearchCV)}");
+            }
+
+            var correctValues = from val in _parameters
+                                where val.Value.Length > 0
+                                select val;
+            if (correctValues.Count() == 0)
+            {
+                throw new ParametersMissingException($"No parameters were given to {nameof(GridSearchCV)}");
+            }
         }
 
         /// <summary>
@@ -196,7 +214,7 @@ namespace AlgorithmExtensions.Hyperalgorithms
                               select parameter;
 
             var optionTypesCount = optionTypes.Count();
-            if (optionTypesCount > 1 && optionTypesCount < 1)
+            if (optionTypesCount > 1)
             {
                 throw new IncorrectCreationalDelegateException(optionTypesCount > 1 ? "There are multiple option parameters in creational delegate" : "There is no option parameter in creational delegate");
             }
@@ -212,7 +230,7 @@ namespace AlgorithmExtensions.Hyperalgorithms
             {
                 try
                 {
-                    estimator = (IEstimator<ITransformer>)creationalDelegate.DynamicInvoke(pipelineItem.DefaultParameters);
+                    estimator = (IEstimator<ITransformer>)creationalDelegate.DynamicInvoke(pipelineItem.DefaultParameters)!;
                 }
                 catch
                 {
