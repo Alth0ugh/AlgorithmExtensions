@@ -6,6 +6,7 @@ using Microsoft.ML.Trainers;
 using Microsoft.ML.Trainers.LightGbm;
 using Microsoft.ML.Transforms.Text;
 using AlgorithmExtensions.Exceptions;
+using System.Diagnostics;
 
 namespace AlgorithmExtensions.Tests
 {
@@ -45,6 +46,16 @@ namespace AlgorithmExtensions.Tests
 
             var gridSearch = new GridSearchCV(mlContext, pipelineTemplate, parameters, new FScoringFunctionBinary<YelOutput>(mlContext));
             await gridSearch.Fit(dataView);
+
+            Assert.Equal(2, (int)gridSearch.BestParameters["svm"]
+                .Where(x => x.Name == nameof(LinearSvmTrainer.Options.NumberOfIterations))
+                .Single().Value);
+
+            Assert.Equal(0.1f, (float)gridSearch.BestParameters["svm"]
+                .Where(x => x.Name == nameof(LinearSvmTrainer.Options.Lambda))
+                .Single().Value);
+
+            Debug.WriteLine("");
         }
 
         [Fact]
@@ -68,6 +79,10 @@ namespace AlgorithmExtensions.Tests
 
             var gridSearch = new GridSearchCV(mlContext, pipelineTamplate, parameters, new AccuracyScoringFunction<ModelOutput>(mlContext));
             await gridSearch.Fit(trainingDataView);
+
+            Assert.Equal(100, (int)gridSearch.BestParameters["lgbm"]
+                .Where(x => x.Name == nameof(LightGbmBinaryTrainer.Options.NumberOfIterations))
+                .Single().Value);
         }
 
         [Fact]
@@ -190,7 +205,7 @@ namespace AlgorithmExtensions.Tests
         }
 
         [Fact]
-        public async Task Fit_GridSearchWithIncorrectArgumentCount_ShouldSucceed()
+        public async Task Fit_GridSearchWithIncorrectArgumentCount_ShouldThowException()
         {
             var mlContext = new MLContext();
 

@@ -22,7 +22,7 @@ namespace AlgorithmExtensions.Hyperalgorithms
         /// <summary>
         /// Estimator trained on the whole dataset using the best parameters.
         /// </summary>
-        public IEstimator<ITransformer> BestEstimator { get; set; }
+        public ITransformer BestEstimator { get; set; }
         /// <summary>
         /// Best parameters found.
         /// </summary>
@@ -145,7 +145,7 @@ namespace AlgorithmExtensions.Hyperalgorithms
                 bestEstimator++;
             }
 
-            BestEstimator = GenerateEstimatorChain(pipelines[bestEstimator]);
+            BestEstimator = GenerateEstimatorChain(pipelines[bestEstimator]).Fit(data);
             BestParameters = pipelines[bestEstimator];
         }
 
