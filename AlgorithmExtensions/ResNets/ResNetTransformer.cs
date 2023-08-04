@@ -46,7 +46,7 @@ namespace AlgorithmExtensions.ResNets
                 builder.AddColumn(column.Name, column.Type, column.Annotations);
             }
 
-            builder.AddColumn(_options.PredictedLabelColumnName, NumberDataViewType.Single);
+            builder.AddColumn(nameof(ModelPrediction.Prediction), NumberDataViewType.Single);
             return builder.ToSchema();
         }
 
@@ -148,11 +148,12 @@ namespace AlgorithmExtensions.ResNets
 
         private uint[] GetPredictions(Tensors tensors)
         {
+            Tensor[] ten = tensors;
             var count = tensors.shape[0];
             var predictions = new uint[count];
             for (int i = 0; i < count; i++)
             {
-                var prediction = np.argmax(tensors[0][i].numpy());
+                var prediction = np.argmax(ten[0][i].numpy());
                 predictions[i] = prediction;
             }
 

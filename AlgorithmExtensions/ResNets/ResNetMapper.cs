@@ -52,9 +52,9 @@ namespace AlgorithmExtensions.ResNets
 
             var featureGetter = input.GetGetter<MLImage>(dependencies.ElementAt(0));
 
-            MLImage image = null;
+            MLImage? image = null;
 
-            featureGetter(ref image);
+            featureGetter(ref image!);
 
             var result = _model.Transform(image);
             var cursor = result.GetRowCursor(result.Schema);

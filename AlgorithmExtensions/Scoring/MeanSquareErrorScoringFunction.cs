@@ -37,8 +37,8 @@ namespace AlgorithmExtensions.Scoring
 
             foreach (var row in dataEnumerator)
             {
-                var goldValue = (float)goldProperty.GetValue(row);
-                var predictedValue = (float)predictedProperty.GetValue(row);
+                var goldValue = (float)goldProperty.GetValue(row)!;
+                var predictedValue = (float)predictedProperty.GetValue(row)!;
 
                 sum += (goldValue - predictedValue) * (goldValue - predictedValue);
                 count++;

@@ -17,16 +17,18 @@ namespace AlgorithmExtensions.Hyperalgorithms
         private IScoringFunction _scoringFunction;
         private int _crossValidationSplits;
         private MLContext _mlContext;
-        private IEstimator<ITransformer>[] _estimators = null;
+
+        private const string _checkParametersParametersNotGivenError = "No parameters were given to {0}";
+        private const string _creationalDelegateError = "Creational delegate with name {0} did not create any type of estimator or default parameters given were incorrect.";
 
         /// <summary>
         /// Estimator trained on the whole dataset using the best parameters.
         /// </summary>
-        public ITransformer BestEstimator { get; set; }
+        public ITransformer? BestEstimator { get; set; }
         /// <summary>
         /// Best parameters found.
         /// </summary>
-        public Dictionary<string, ParameterInstance[]> BestParameters { get; set; }
+        public Dictionary<string, ParameterInstance[]>? BestParameters { get; set; }
 
         /// <summary>
         /// Creates new instance of grid search.
@@ -36,7 +38,7 @@ namespace AlgorithmExtensions.Hyperalgorithms
         /// <param name="parameters">Parameter provider for the model.</param>
         /// <param name="scoringFunction">Scoring function to be used for scoring the models.</param>
         /// <param name="crossValidationSplits">Number of splits for cross-validation.</param>
-        public GridSearchCV(MLContext mlContext, PipelineTemplate template, ParameterProviderForModel parameters, IScoringFunction scoringFunction = null, int crossValidationSplits = 5)
+        public GridSearchCV(MLContext mlContext, PipelineTemplate template, ParameterProviderForModel parameters, IScoringFunction scoringFunction, int crossValidationSplits = 5)
         {
             _template = template;
             _parameters = parameters;
@@ -74,11 +76,7 @@ namespace AlgorithmExtensions.Hyperalgorithms
                     for (int j = 0; j < _parameters[estimatorNames[i]].Length; j++)
                     {
                         var possibleParameters = _parameters[estimatorNames[i]][j].GetParameterValues();
-                        parameterInstances.Add(new ParameterInstance() 
-                        { 
-                            Name = _parameters[estimatorNames[i]][j].Name, 
-                            Value = possibleParameters[combination[index]] 
-                        });
+                        parameterInstances.Add(new ParameterInstance(_parameters[estimatorNames[i]][j].Name, possibleParameters[combination[index]]));
                         index++;
                     }
                     dict.Add(estimatorNames[i], parameterInstances.ToArray());
@@ -153,7 +151,7 @@ namespace AlgorithmExtensions.Hyperalgorithms
         {
             if (_parameters.Count == 0)
             {
-                throw new ParametersMissingException($"No parameters were given to {nameof(GridSearchCV)}");
+                throw new ParametersMissingException(string.Format(_checkParametersParametersNotGivenError, nameof(GridSearchCV)));
             }
 
             var correctValues = from val in _parameters
@@ -161,7 +159,7 @@ namespace AlgorithmExtensions.Hyperalgorithms
                                 select val;
             if (correctValues.Count() == 0)
             {
-                throw new ParametersMissingException($"No parameters were given to {nameof(GridSearchCV)}");
+                throw new ParametersMissingException(string.Format(_checkParametersParametersNotGivenError, nameof(GridSearchCV)));
             }
         }
 
@@ -238,34 +236,17 @@ namespace AlgorithmExtensions.Hyperalgorithms
                 }
                 catch
                 {
-                    throw new IncorrectCreationalDelegateException($"Creational delegate with name {pipelineItem.Name} did not create any type of estimator or default parameters given were incorrect.");
+                    throw new IncorrectCreationalDelegateException(string.Format(_creationalDelegateError, pipelineItem.Name));
                 }
             }
 
             if (estimator is null)
             {
-                throw new IncorrectCreationalDelegateException($"Creational delegate with name {pipelineItem.Name} did not create any type of estimator or default parameters given were incorrect.");
+                throw new IncorrectCreationalDelegateException(string.Format(_creationalDelegateError, pipelineItem.Name));
             }
 
             return estimator;
         }
-
-        /*
-        private IEstimator<ITransformer> CreateTransformerFromDelegate(PipelineItem pipelineItem, Dictionary<string, string> parameterCollection)
-        {
-            var defaultParameters = pipelineItem.DefaultParameters;
-            var delegateParameters = pipelineItem.CreationalDelegate.Method.GetParameters();
-            var parameterEntry = parameterCollection[pipelineItem.Name].Split("_");
-            var targetParameterName = parameterEntry[0];
-            var targetParameterValue = parameterEntry[1];
-
-            var targetParameter = from parameter in delegateParameters
-                                  where parameter.Name == targetParameterName
-                                  select parameter;
-
-            return null;
-        }
-        */
 
         /// <summary>
         /// Generates options for model and sets options according to parameters set by the user values and deafult values.
@@ -276,7 +257,7 @@ namespace AlgorithmExtensions.Hyperalgorithms
         /// <returns>Options with set parameter values.</returns>
         private TrainerInputBase GenerateAndSetOptions(Type optionType, PipelineItem pipelineItem, Dictionary<string, ParameterInstance[]> parameterCollection)
         {
-            var options = (TrainerInputBase)Activator.CreateInstance(optionType);
+            var options = (TrainerInputBase)Activator.CreateInstance(optionType)!; //TODO raise exception when options cannot be created
             var defaultOptions = pipelineItem.DefaultOptions;
 
             if (defaultOptions != null)

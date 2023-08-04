@@ -47,7 +47,7 @@ namespace AlgorithmExtensions.Tests
             var gridSearch = new GridSearchCV(mlContext, pipelineTemplate, parameters, new FScoringFunctionBinary<YelOutput>(mlContext));
             await gridSearch.Fit(dataView);
 
-            Assert.Equal(2, (int)gridSearch.BestParameters["svm"]
+            Assert.Equal(2, (int)gridSearch.BestParameters!["svm"]
                 .Where(x => x.Name == nameof(LinearSvmTrainer.Options.NumberOfIterations))
                 .Single().Value);
 
@@ -80,7 +80,7 @@ namespace AlgorithmExtensions.Tests
             var gridSearch = new GridSearchCV(mlContext, pipelineTamplate, parameters, new AccuracyScoringFunction<ModelOutput>(mlContext));
             await gridSearch.Fit(trainingDataView);
 
-            Assert.Equal(100, (int)gridSearch.BestParameters["lgbm"]
+            Assert.Equal(100, (int)gridSearch.BestParameters!["lgbm"]
                 .Where(x => x.Name == nameof(LightGbmBinaryTrainer.Options.NumberOfIterations))
                 .Single().Value);
         }
@@ -199,7 +199,7 @@ namespace AlgorithmExtensions.Tests
             await Assert.ThrowsAsync<IncorrectCreationalDelegateException>(async () => await gridSearch.Fit(trainingDataView));
         }
 
-        public void Function()
+        private void Function()
         {
 
         }

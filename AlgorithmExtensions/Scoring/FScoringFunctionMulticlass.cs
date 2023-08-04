@@ -67,8 +67,8 @@ namespace AlgorithmExtensions.Scoring
 
             foreach (var row in dataEnumerator)
             {
-                var goldValue = UnpackPropertyValue(goldProperty.GetValue(row));
-                var predictedValue = UnpackPropertyValue(predictedProperty.GetValue(row));
+                var goldValue = UnpackPropertyValue(goldProperty.GetValue(row)!);
+                var predictedValue = UnpackPropertyValue(predictedProperty.GetValue(row)!);
 
                 if (goldValue == predictedValue)
                 {

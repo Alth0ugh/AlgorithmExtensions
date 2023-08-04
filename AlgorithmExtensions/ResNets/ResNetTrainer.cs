@@ -43,7 +43,7 @@ namespace AlgorithmExtensions.ResNets
                 bias_initializer: "zeros").Apply(input);
             var pool = tf.keras.layers.MaxPooling2D(new Shape(3, 3), new Shape(2, 2)).Apply(conv1);
 
-            Tensors residual = null;
+            Tensors? residual = null;
             switch(architecture)
             {
                 case ResNetArchitecture.ResNet50:
@@ -170,12 +170,6 @@ namespace AlgorithmExtensions.ResNets
             }
         }
 
-        public ResNetTransformer Fit(NDArray x, NDArray y)
-        {
-            _model.fit(x, y, batch_size: _options.BatchSize, epochs: _options.Epochs);
-            return new ResNetTransformer(_model, _options, null);
-        }
-
         /// <summary>
         /// Returns the schema of ouput with regards to the input data.
         /// </summary>
@@ -187,7 +181,7 @@ namespace AlgorithmExtensions.ResNets
             try
             {
                 var constructor = typeof(SchemaShape.Column).GetConstructor(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance, new Type[] { typeof(string), typeof(VectorKind), typeof(DataViewType), typeof(bool), typeof(SchemaShape) })!;
-                var predictionColumn = (SchemaShape.Column)constructor.Invoke(new object[] { "Prediction", VectorKind.Scalar, NumberDataViewType.Single, false, null });
+                var predictionColumn = (SchemaShape.Column)constructor.Invoke(new object[] { nameof(ModelPrediction.Prediction), VectorKind.Scalar, NumberDataViewType.Single, false, null });
                 return new SchemaShape(new[] { predictionColumn });
             }
             catch (Exception ex)

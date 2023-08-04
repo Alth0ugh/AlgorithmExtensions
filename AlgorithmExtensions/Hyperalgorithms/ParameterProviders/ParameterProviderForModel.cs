@@ -10,7 +10,7 @@
         /// </summary>
         /// <param name="name">Model name.</param>
         /// <param name="parameterProviders">Parameter providers for the model.</param>
-        public void Add(string name, params IParameterProvider[] parameterProviders)
+        public new void Add(string name, params IParameterProvider[] parameterProviders)
         {
             base.Add(name, parameterProviders);
         }

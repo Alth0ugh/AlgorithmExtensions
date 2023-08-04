@@ -9,6 +9,6 @@ namespace AlgorithmExtensions.Tests
     internal class ImageOutput
     {
         public uint LabelKey { get; set; }
-        public string Label { get; set; }
+        public string? Label { get; set; }
     }
 }

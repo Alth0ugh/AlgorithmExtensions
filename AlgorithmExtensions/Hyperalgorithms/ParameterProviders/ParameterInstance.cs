@@ -13,5 +13,10 @@
         /// Value of the parameter.
         /// </summary>
         public object Value { get; set; }
+        public ParameterInstance(string name, object value)
+        {
+            Name = name;
+            Value = value;
+        }
     }
 }

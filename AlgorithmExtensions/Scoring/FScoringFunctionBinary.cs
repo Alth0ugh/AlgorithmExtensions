@@ -39,8 +39,8 @@ namespace AlgorithmExtensions.Scoring
 
             foreach (var row in dataEnumerator)
             {
-                var goldValue = (bool)goldProperty.GetValue(row);
-                var predictedValue = (bool)predictedProperty.GetValue(row);
+                var goldValue = (bool)goldProperty.GetValue(row)!;
+                var predictedValue = (bool)predictedProperty.GetValue(row)!;
 
                 if (predictedValue && goldValue)
                 {

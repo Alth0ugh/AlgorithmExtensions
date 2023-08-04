@@ -26,7 +26,7 @@ namespace AlgorithmExtensions.Tests
                 /* If the useFolderNameAsLabel parameter is set to true, then name 
                    of parent directory of the image file is used as the label. Else label is expected to be the file name or a a prefix of the file name. */
                 if (useFolderNameAsLabel)
-                    label = Directory.GetParent(file).Name;
+                    label = Directory.GetParent(file)!.Name;
                 else
                 {
                     for (int index = 0; index < label.Length; index++)

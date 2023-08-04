@@ -22,8 +22,8 @@ namespace AlgorithmExtensions.ResNets
             var height = 0;
             while (cursor.MoveNext())
             {
-                MLImage imageValue = default;
-                imageDataGetter(ref imageValue);
+                MLImage? imageValue = default;
+                imageDataGetter(ref imageValue!);
                 width = imageValue.Width;
                 height = imageValue.Height;
                 var pixels = GetPixelsFromImage(imageValue).ToByteArray();
@@ -132,7 +132,7 @@ namespace AlgorithmExtensions.ResNets
                 }
             }
 
-            return new NDArray(result, new Shape(labels.Count, 7));
+            return new NDArray(result, new Shape(labels.Count, numberOfClasses));
         }
     }
 }
