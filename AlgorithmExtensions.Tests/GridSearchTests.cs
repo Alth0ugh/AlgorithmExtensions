@@ -1,12 +1,10 @@
 using AlgorithmExtensions.Hyperalgorithms;
 using AlgorithmExtensions.Hyperalgorithms.ParameterProviders;
-using AlgorithmExtensions.ResNets;
 using AlgorithmExtensions.Scoring;
 using Microsoft.ML;
 using Microsoft.ML.Trainers;
 using Microsoft.ML.Trainers.LightGbm;
 using Microsoft.ML.Transforms.Text;
-using AlgorithmExtensions.Extensions;
 using AlgorithmExtensions.Exceptions;
 
 namespace AlgorithmExtensions.Tests
@@ -42,8 +40,8 @@ namespace AlgorithmExtensions.Tests
             pipelineTemplate.Add(model, "svm");
 
             var parameters = new ParameterProviderForModel();
-            parameters.Add("svm", new ConstantParameterProvider(nameof(LinearSvmTrainer.Options.NumberOfIterations), 1),
-                new StepParameterProvider<float>(nameof(LinearSvmTrainer.Options.Lambda), 1, 100, 10));
+            parameters.Add("svm", new ConstantParameterProvider(nameof(LinearSvmTrainer.Options.NumberOfIterations), 1, 2),
+                new GeometricParameterProvider<float>(nameof(LinearSvmTrainer.Options.Lambda), 0.1f, 3, 0.1f));
 
             var gridSearch = new GridSearchCV(mlContext, pipelineTemplate, parameters, new FScoringFunctionBinary<YelOutput>(mlContext));
             await gridSearch.Fit(dataView);
@@ -163,24 +161,56 @@ namespace AlgorithmExtensions.Tests
             await Assert.ThrowsAsync<ParametersMissingException>(async () => await gridSearch.Fit(trainingDataView));
         }
 
-        /*
         [Fact]
-        public void TrainGithubIssue()
+        public async Task Fit_GridSearchWithIncorrectCreationalDelegate_ShouldThrowException()
         {
             var mlContext = new MLContext();
-            var data = mlContext.Data.LoadFromTextFile<GihubIssue>(@"C:\Users\Oliver\Desktop\issues.tsv", hasHeader: true);
 
-            var pipeline = mlContext.Transforms.Conversion.MapValueToKey(inputColumnName: "Area", outputColumnName: "Label")
-                .Append(mlContext.Transforms.Text.FeaturizeText(inputColumnName: "Title", outputColumnName: "TitleFeaturized"))
-                .Append(mlContext.Transforms.Text.FeaturizeText(inputColumnName: "Description", outputColumnName: "DescriptionFeaturized"))
-                .Append(mlContext.Transforms.Concatenate("Features", "TitleFeaturized", "DescriptionFeaturized"));
+            IDataView trainingDataView = GetInputData(mlContext);
 
-            var trainingPipeline = pipeline.Append(mlContext.MulticlassClassification.Trainers.SdcaMaximumEntropy("Label", "Features"));
-            var transformer = trainingPipeline.Fit(data);
-            var newData = transformer.Transform(data);
-            var metrics = mlContext.MulticlassClassification.CrossValidate(data, trainingPipeline);
+            var pipelineTamplate = new PipelineTemplate();
+            var concatenateDefaultParameters = new object[]
+            {
+                "Features",
+                GetColumnConcatenation()
+            };
+            pipelineTamplate.Add(Function, "function");
+            pipelineTamplate.Add(new Func<LightGbmBinaryTrainer.Options, LightGbmBinaryTrainer>(mlContext.BinaryClassification.Trainers.LightGbm), "lgbm");
 
-            Debug.WriteLine("");
-        }/*/
+            var parameters = new ParameterProviderForModel();
+            parameters.Add("lgbm", new ConstantParameterProvider(nameof(LightGbmBinaryTrainer.Options.NumberOfIterations), 1));
+
+            var gridSearch = new GridSearchCV(mlContext, pipelineTamplate, parameters, new AccuracyScoringFunction<ModelOutput>(mlContext));
+            await Assert.ThrowsAsync<IncorrectCreationalDelegateException>(async () => await gridSearch.Fit(trainingDataView));
+        }
+
+        public void Function()
+        {
+
+        }
+
+        [Fact]
+        public async Task Fit_GridSearchWithIncorrectArgumentCount_ShouldSucceed()
+        {
+            var mlContext = new MLContext();
+
+            IDataView trainingDataView = GetInputData(mlContext);
+
+            var pipelineTamplate = new PipelineTemplate();
+            var concatenateDefaultParameters = new object[]
+            {
+                "Features",
+                GetColumnConcatenation(),
+                "shouldNotBeHere"
+            };
+            pipelineTamplate.Add(mlContext.Transforms.Concatenate, "concatenate", concatenateDefaultParameters);
+            pipelineTamplate.Add(new Func<LightGbmBinaryTrainer.Options, LightGbmBinaryTrainer>(mlContext.BinaryClassification.Trainers.LightGbm), "lgbm");
+
+            var parameters = new ParameterProviderForModel();
+            parameters.Add("lgbm", new ConstantParameterProvider(nameof(LightGbmBinaryTrainer.Options.NumberOfIterations), 1, 100));
+
+            var gridSearch = new GridSearchCV(mlContext, pipelineTamplate, parameters, new AccuracyScoringFunction<ModelOutput>(mlContext));
+            await Assert.ThrowsAsync<IncorrectCreationalDelegateException>(async () => await gridSearch.Fit(trainingDataView));
+        }
     }
 }

@@ -15,12 +15,18 @@ namespace AlgorithmExtensions.Hyperalgorithms
         private PipelineTemplate _template;
         private ParameterProviderForModel _parameters;
         private IScoringFunction _scoringFunction;
-        private bool _refit;
         private int _crossValidationSplits;
         private MLContext _mlContext;
         private IEstimator<ITransformer>[] _estimators = null;
+
+        /// <summary>
+        /// Estimator trained on the whole dataset using the best parameters.
+        /// </summary>
         public IEstimator<ITransformer> BestEstimator { get; set; }
-        public ParameterProviderForModel BestParameters { get; set; }
+        /// <summary>
+        /// Best parameters found.
+        /// </summary>
+        public Dictionary<string, ParameterInstance[]> BestParameters { get; set; }
 
         /// <summary>
         /// Creates new instance of grid search.
@@ -29,14 +35,12 @@ namespace AlgorithmExtensions.Hyperalgorithms
         /// <param name="template">Model template.</param>
         /// <param name="parameters">Parameter provider for the model.</param>
         /// <param name="scoringFunction">Scoring function to be used for scoring the models.</param>
-        /// <param name="refit">If true, the best model is refitted on the whole dataset.</param>
         /// <param name="crossValidationSplits">Number of splits for cross-validation.</param>
-        public GridSearchCV(MLContext mlContext, PipelineTemplate template, ParameterProviderForModel parameters, IScoringFunction scoringFunction = null, bool refit = true, int crossValidationSplits = 5)
+        public GridSearchCV(MLContext mlContext, PipelineTemplate template, ParameterProviderForModel parameters, IScoringFunction scoringFunction = null, int crossValidationSplits = 5)
         {
             _template = template;
             _parameters = parameters;
             _scoringFunction = scoringFunction;
-            _refit = refit;
             _mlContext = mlContext;
             _crossValidationSplits = crossValidationSplits;
         }
@@ -142,7 +146,7 @@ namespace AlgorithmExtensions.Hyperalgorithms
             }
 
             BestEstimator = GenerateEstimatorChain(pipelines[bestEstimator]);
-            //BestParameters = pipelines[bestEstimator];
+            BestParameters = pipelines[bestEstimator];
         }
 
         private void CheckParameters()
@@ -219,7 +223,7 @@ namespace AlgorithmExtensions.Hyperalgorithms
                 throw new IncorrectCreationalDelegateException(optionTypesCount > 1 ? "There are multiple option parameters in creational delegate" : "There is no option parameter in creational delegate");
             }
 
-            IEstimator<ITransformer> estimator = null;
+            IEstimator<ITransformer>? estimator = null;
 
             if (optionTypesCount == 1)
             {
@@ -237,6 +241,12 @@ namespace AlgorithmExtensions.Hyperalgorithms
                     throw new IncorrectCreationalDelegateException($"Creational delegate with name {pipelineItem.Name} did not create any type of estimator or default parameters given were incorrect.");
                 }
             }
+
+            if (estimator is null)
+            {
+                throw new IncorrectCreationalDelegateException($"Creational delegate with name {pipelineItem.Name} did not create any type of estimator or default parameters given were incorrect.");
+            }
+
             return estimator;
         }
 

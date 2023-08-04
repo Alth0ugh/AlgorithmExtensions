@@ -97,61 +97,6 @@ namespace AlgorithmExtensions.ResNets
             }
         }
 
-        /// <summary>
-        /// Load model.
-        /// </summary>
-        /// <param name="mlContext">Machine learning context.</param>
-        /// <param name="path">Path to folder where the model files are stored.</param>
-        /// <param name="modelName">Name of the model without the extension.</param>
-        /// <returns>Loaded model.</returns>
-        /// <exception cref="IOException">Thrown when any of the model files cannot be read or is not present.</exception>
-        /// <exception cref="DeserializationException">Thrown when any of the model files cannot be deserialized.</exception>
-        public static ResNetTransformer Load(string path, string modelName)
-        {
-            throw new NotImplementedException();
-            IModel? kerasModel = default;
-            DataViewSchema? schema = default;
-            Options? options = default;
-
-            try
-            {
-                var loadOptions = new LoadOptions();
-                loadOptions.experimental_variable_policy = VariablePolicy.SAVE_VARIABLE_DEVICES;
-                kerasModel = tf.keras.models.load_model(Path.Combine(path, modelName), true, loadOptions);
-            }
-            catch (Exception ex)
-            {
-                throw new IOException("Error while loading model with .keras extension. See inner exception", ex);
-            }
-
-            try
-            {
-                var schemaJson = File.ReadAllText(Path.Combine(path, modelName + ".input"));
-                //schema = JsonSerializer.Deserialize<DataViewSchema>(schemaJson);
-            }
-            catch (Exception ex)
-            {
-                throw new IOException("Schema with .input extension could not be loaded or deserialized. See inner exception.", ex);
-            }
-
-            try
-            {
-                var optionsJson = File.ReadAllText(Path.Combine(path, modelName + ".options"));
-                //ptions = JsonSerializer.Deserialize<Options>(optionsJson);
-            }
-            catch (Exception ex)
-            {
-                throw new IOException("Options with .options extension could not be loaded or deserialized. See inner exception.", ex);
-            }
-
-            if (options == null || schema == null)
-            {
-                throw new DeserializationException(options == null ? "Options could not be deserialized" : "Schema could not be deserialized");
-            }
-
-            return new ResNetTransformer(kerasModel, options, schema);
-        }
-
         public IDataView Transform(IDataView input)
         {
             var featureColumn = input.Schema[_options.FeatureColumnName];
