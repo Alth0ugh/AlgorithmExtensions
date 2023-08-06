@@ -247,5 +247,43 @@ namespace AlgorithmExtensions.Tests
 
             await Assert.ThrowsAsync<IncorrectCreationalDelegateException>(async () => await gridSearch.Fit(data));
         }
+
+        [Fact]
+        public void GetParameterValues_GeometricParameterProvider_ShouldReturnArrayOfNumbers()
+        {
+            var provider = new GeometricParameterProvider<float>("name", 0.1f, 3, 0.1f);
+            var result = provider.GetParameterValues();
+
+            var epsilon = 0.00001f;
+
+            Assert.True((float)result[0] - 0.1f < epsilon);
+            Assert.True((float)result[1] - 0.01f < epsilon);
+            Assert.True((float)result[2] - 0.001f < epsilon);
+            Assert.Equal(3, result.Length);
+        }
+
+        [Fact]
+        public void GetParameterValues_StepParameterProvider_ShouldReturnArrayOfNumbers()
+        {
+            var provider = new StepParameterProvider<int>("name", 1, 5, 2);
+            var result = provider.GetParameterValues();
+
+            Assert.Equal(1, (int)result[0]);
+            Assert.Equal(3, (int)result[1]);
+            Assert.Equal(5, (int)result[2]);
+            Assert.Equal(3, result.Length);
+        }
+
+        [Fact]
+        public void GetParameterValues_ConstantParameterProvider_ShouldReturnArrayOfNumbers()
+        {
+            var provider = new ConstantParameterProvider("name", 1, 2, 3);
+            var result = provider.GetParameterValues();
+
+            Assert.Equal(1, (int)result[0]);
+            Assert.Equal(2, (int)result[1]);
+            Assert.Equal(3, (int)result[2]);
+            Assert.Equal(3, result.Length);
+        }
     }
 }

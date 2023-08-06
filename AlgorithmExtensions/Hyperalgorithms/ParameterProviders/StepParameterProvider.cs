@@ -52,7 +52,7 @@ namespace AlgorithmExtensions.Hyperalgorithms.ParameterProviders
         public object[] GetParameterValues()
         {
             var current = Start;
-            var list = new List<object>() { current };
+            var list = new List<object>();
 
             while (current <= Stop)
             {

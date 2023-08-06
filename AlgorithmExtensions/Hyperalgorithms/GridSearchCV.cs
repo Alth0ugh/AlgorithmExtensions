@@ -290,7 +290,7 @@ namespace AlgorithmExtensions.Hyperalgorithms
             }
 
             var properties = options.GetType().GetProperties();
-            foreach (var property in properties )
+            foreach (var property in properties)
             {
                 property.SetValue(options, property.GetValue(defaultOptions));
             }
