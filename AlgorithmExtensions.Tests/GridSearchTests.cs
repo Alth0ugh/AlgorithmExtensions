@@ -228,5 +228,24 @@ namespace AlgorithmExtensions.Tests
             var gridSearch = new GridSearchCV(mlContext, pipelineTamplate, parameters, new AccuracyScoringFunction<ModelOutput>(mlContext));
             await Assert.ThrowsAsync<IncorrectCreationalDelegateException>(async () => await gridSearch.Fit(trainingDataView));
         }
+
+        [Fact]
+        public async Task Fit_GridSearchWithoutAllDefaultParametersInTransformer_ShouldThrowException()
+        {
+            var mlContext = new MLContext();
+
+            var data = GetInputData(mlContext);
+
+            var pipelineTamplate = new PipelineTemplate();
+            pipelineTamplate.Add(mlContext.Transforms.Concatenate, "concatenate");
+            pipelineTamplate.Add(new Func<LightGbmBinaryTrainer.Options, LightGbmBinaryTrainer>(mlContext.BinaryClassification.Trainers.LightGbm), "lgbm");
+
+            var parameters = new ParameterProviderForModel();
+            parameters.Add("lgbm", new ConstantParameterProvider(nameof(LightGbmBinaryTrainer.Options.NumberOfIterations), 1, 100));
+
+            var gridSearch = new GridSearchCV(mlContext, pipelineTamplate, parameters, new AccuracyScoringFunction<ModelOutput>(mlContext));
+
+            await Assert.ThrowsAsync<IncorrectCreationalDelegateException>(async () => await gridSearch.Fit(data));
+        }
     }
 }
