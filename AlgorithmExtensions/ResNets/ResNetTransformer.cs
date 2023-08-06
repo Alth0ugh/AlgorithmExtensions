@@ -104,7 +104,7 @@ namespace AlgorithmExtensions.ResNets
 
             var featureCursor = input.GetRowCursor(new[] { featureColumn });
             var imageDataGetter = featureCursor.GetGetter<MLImage>(featureColumn);
-            var x = GetInputData(featureCursor, imageDataGetter) / 255.0f;
+            var x = GetInputData(featureCursor, imageDataGetter, _options.Height, _options.Width) / 255.0f;
 
             var modelPrediction = _model.predict(x);
             var predictions = GetPredictions(modelPrediction);

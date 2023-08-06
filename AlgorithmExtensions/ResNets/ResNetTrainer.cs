@@ -35,8 +35,10 @@ namespace AlgorithmExtensions.ResNets
         /// <returns>Trained transformer.</returns>
         /// <exception cref="MissingColumnException">Thrown when a column is missing from the input data.</exception>
         /// <exception cref="TypeMismatchException">Thrown when the expected data type of a column is different from expected data type.</exception>
+        /// <exception cref="IncorrectDimensionsException">Thrown when the input dimensions are below 32 pixels in any dimension.</exception>
         public ResNetTransformer Fit(IDataView input)
         {
+            CheckInputDimensions();
             CheckInputColumns(input);
 
             var featureColumn = input.Schema[_options.FeatureColumnName];
@@ -48,7 +50,7 @@ namespace AlgorithmExtensions.ResNets
 
             var featureCursor = input.GetRowCursor(new[] { featureColumn });
             var imageDataGetter = featureCursor.GetGetter<MLImage>(featureColumn);
-            var x = GetInputData(featureCursor, imageDataGetter) / 255.0f;
+            var x = GetInputData(featureCursor, imageDataGetter, _options.Height, _options.Width) / 255.0f;
 
             _model.fit(x, y, batch_size: _options.BatchSize, epochs: _options.Epochs);
 
@@ -78,6 +80,14 @@ namespace AlgorithmExtensions.ResNets
             }
         }
 
+        private void CheckInputDimensions()
+        {
+            if (_options.Width < 32 || _options.Height < 32)
+            {
+                throw new IncorrectDimensionsException($"{nameof(Options.Width)} and {nameof(Options.Height)} must be at least 32.");
+            }
+        }
+
         /// <summary>
         /// Generates ResNet with a given architecture.
         /// </summary>
@@ -85,7 +95,7 @@ namespace AlgorithmExtensions.ResNets
         /// <returns>ResNet model.</returns>
         private IModel GenerateModel(ResNetArchitecture architecture)
         {
-            var input = tf.keras.layers.Input(new Shape(32, 32, 3));
+            var input = tf.keras.layers.Input(new Shape(_options.Height, _options.Width, 3));
             var conv1 = tf.keras.layers.Conv2D(64,
                 new Shape(7, 7),
                 new Shape(2, 2),

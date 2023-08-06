@@ -15,17 +15,18 @@ namespace AlgorithmExtensions.ResNets
         /// <param name="cursor">Cursor pointing to input data.</param>
         /// <param name="imageDataGetter">Getter for image data.</param>
         /// <returns>NDArray containg image data.</returns>
-        private protected NDArray GetInputData(DataViewRowCursor cursor, ValueGetter<MLImage> imageDataGetter)
+        /// <exception cref="NullReferenceException">Thrown when no image data is found in the input data.</exception>
+        /// <exception cref="IncorrectDimensionsException">Thrown when the input does not have the dimensions supplied in ResNet options.</exception>
+        private protected NDArray GetInputData(DataViewRowCursor cursor, ValueGetter<MLImage> imageDataGetter, int height, int width)
         {
             var list = new List<byte[,,]>();
-            var width = 0;
-            var height = 0;
             while (cursor.MoveNext())
             {
                 MLImage? imageValue = default;
                 imageDataGetter(ref imageValue!);
-                width = imageValue.Width;
-                height = imageValue.Height;
+
+                CheckImage(imageValue, height, width);
+
                 var pixels = GetPixelsFromImage(imageValue).ToByteArray();
                 list.Add(pixels);
             }
@@ -38,6 +39,19 @@ namespace AlgorithmExtensions.ResNets
             }
 
             return resultArray;
+        }
+
+        private void CheckImage(MLImage image, int height, int width)
+        {
+            if (image == null)
+            {
+                throw new NullReferenceException("No image data was found in the input data.");
+            }
+
+            if (image.Width != width || image.Height != height)
+            {
+                throw new IncorrectDimensionsException("Image width and height must be at least 32 pixels.");
+            }
         }
 
         /// <summary>

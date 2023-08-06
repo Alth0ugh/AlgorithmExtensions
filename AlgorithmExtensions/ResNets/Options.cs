@@ -26,5 +26,7 @@ namespace AlgorithmExtensions.ResNets
         public int BatchSize { get; set; }
         public int Epochs { get; set; }
         public float LearningRate { get; set; } = 0.0001f;
+        public int Height { get; set; } = 224;
+        public int Width { get; set; } = 224;
     }
 }

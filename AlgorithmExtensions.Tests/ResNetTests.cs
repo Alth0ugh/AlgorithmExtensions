@@ -9,6 +9,9 @@ namespace AlgorithmExtensions.Tests
 {
     public class ResNetTests
     {
+        private const string _correctSDNET = @"C:\Users\Oliver\Desktop\SDNET";
+        private const string _incorrectSDNET = @"C:\Users\Oliver\Desktop\IncorrectSDNET";
+
         public static IEnumerable<ImgData> LoadImagesFromDirectory(string folder, bool useFolderNameAsLabel = true)
         {
             //get all file paths from the subdirectories
@@ -49,19 +52,19 @@ namespace AlgorithmExtensions.Tests
 
         public ResNetTrainer GetResnet(MLContext mlContext)
         {
-            var options = new Options() { BatchSize = 30, Epochs = 1, Classes = 7, Architecture = ResNetArchitecture.ResNet50, FeatureColumnName = "Features", LabelColumnName = "LabelKey" };
+            var options = new Options() { BatchSize = 30, Epochs = 1, Classes = 7, Height = 256, Width = 256, Architecture = ResNetArchitecture.ResNet50, FeatureColumnName = "Features", LabelColumnName = "LabelKey" };
 
             var resnet = mlContext.MulticlassClassification.Trainers.ResNetClassificator(options);
             return resnet;
         }
 
-        public IDataView GetInputData(MLContext mlContext)
+        public IDataView GetInputData(MLContext mlContext, string path)
         {
-            IEnumerable<ImgData> imgs = LoadImagesFromDirectory(folder: @"C:\Users\Oliver\Desktop\SDNET", useFolderNameAsLabel: true);
+            IEnumerable<ImgData> imgs = LoadImagesFromDirectory(folder: path, useFolderNameAsLabel: true);
             IDataView imgData = mlContext.Data.LoadFromEnumerable(imgs);
 
             var preprocessingPipeline = mlContext.Transforms.Conversion.MapValueToKey(inputColumnName: "Label", outputColumnName: "LabelKey")
-                .Append(mlContext.Transforms.LoadImages(outputColumnName: "Features", imageFolder: @"C:\Users\Oliver\Desktop\SDNET", inputColumnName: "ImagePath"));
+                .Append(mlContext.Transforms.LoadImages(outputColumnName: "Features", imageFolder: path, inputColumnName: "ImagePath"));
 
             var data = preprocessingPipeline.Fit(imgData).Transform(imgData);
             return data;
@@ -72,7 +75,7 @@ namespace AlgorithmExtensions.Tests
         {
             var mlContext = new MLContext();
 
-            var data = GetInputData(mlContext);
+            var data = GetInputData(mlContext, _correctSDNET);
             var resnet = GetResnet(mlContext);
 
             var transformer = resnet.Fit(data);
@@ -87,17 +90,15 @@ namespace AlgorithmExtensions.Tests
         public void GetRow_ResNetMapperWithIncorrectColumns_ShouldThrowException()
         {
             var mlContext = new MLContext();
-            IEnumerable<ImgData> imgs = LoadImagesFromDirectory(folder: @"C:\Users\Oliver\Desktop\SDNET", useFolderNameAsLabel: true);
+            IEnumerable<ImgData> imgs = LoadImagesFromDirectory(folder: _correctSDNET, useFolderNameAsLabel: true);
             IDataView imgData = mlContext.Data.LoadFromEnumerable(imgs);
 
             var preprocessingPipeline = mlContext.Transforms.Conversion.MapValueToKey(inputColumnName: "Label", outputColumnName: "LabelKey")
-                .Append(mlContext.Transforms.LoadImages(outputColumnName: "Features", imageFolder: @"C:\Users\Oliver\Desktop\SDNET", inputColumnName: "ImagePath"));
+                .Append(mlContext.Transforms.LoadImages(outputColumnName: "Features", imageFolder: _correctSDNET, inputColumnName: "ImagePath"));
 
             var data = preprocessingPipeline.Fit(imgData).Transform(imgData);
 
-            var options = new Options() { BatchSize = 30, Epochs = 1, Classes = 7, Architecture = ResNetArchitecture.ResNet50, FeatureColumnName = "Features", LabelColumnName = "LabelKey" };
-
-            var resnet = mlContext.MulticlassClassification.Trainers.ResNetClassificator(options);
+            var resnet = GetResnet(mlContext);
 
             var transformer = resnet.Fit(data);
 
@@ -111,17 +112,15 @@ namespace AlgorithmExtensions.Tests
         public void GetRow_ResNetMapperWithCorrectColumnsWithInactiveFeatureColumn_ShouldThrowException()
         {
             var mlContext = new MLContext();
-            IEnumerable<ImgData> imgs = LoadImagesFromDirectory(folder: @"C:\Users\Oliver\Desktop\SDNET", useFolderNameAsLabel: true);
+            IEnumerable<ImgData> imgs = LoadImagesFromDirectory(folder: _correctSDNET, useFolderNameAsLabel: true);
             IDataView imgData = mlContext.Data.LoadFromEnumerable(imgs);
 
             var preprocessingPipeline = mlContext.Transforms.Conversion.MapValueToKey(inputColumnName: "Label", outputColumnName: "LabelKey")
-                .Append(mlContext.Transforms.LoadImages(outputColumnName: "Features", imageFolder: @"C:\Users\Oliver\Desktop\SDNET", inputColumnName: "ImagePath"));
+                .Append(mlContext.Transforms.LoadImages(outputColumnName: "Features", imageFolder: _correctSDNET, inputColumnName: "ImagePath"));
 
             var data = preprocessingPipeline.Fit(imgData).Transform(imgData);
 
-            var options = new Options() { BatchSize = 30, Epochs = 1, Classes = 7, Architecture = ResNetArchitecture.ResNet50, FeatureColumnName = "Features", LabelColumnName = "LabelKey" };
-
-            var resnet = mlContext.MulticlassClassification.Trainers.ResNetClassificator(options);
+            var resnet = GetResnet(mlContext);
 
             var transformer = resnet.Fit(data);
 
@@ -136,7 +135,7 @@ namespace AlgorithmExtensions.Tests
         {
             var mlContext = new MLContext();
 
-            var data = GetInputData(mlContext);
+            var data = GetInputData(mlContext, _correctSDNET);
             var resnet = GetResnet(mlContext);
 
             var transformer = resnet.Fit(data);
@@ -154,17 +153,15 @@ namespace AlgorithmExtensions.Tests
         public void GetDependencies_ResNetMapperWithIncorrectColumns_ShouldThrowException()
         {
             var mlContext = new MLContext();
-            IEnumerable<ImgData> imgs = LoadImagesFromDirectory(folder: @"C:\Users\Oliver\Desktop\SDNET", useFolderNameAsLabel: true);
+            IEnumerable<ImgData> imgs = LoadImagesFromDirectory(folder: _correctSDNET, useFolderNameAsLabel: true);
             IDataView imgData = mlContext.Data.LoadFromEnumerable(imgs);
 
             var preprocessingPipeline = mlContext.Transforms.Conversion.MapValueToKey(inputColumnName: "Label", outputColumnName: "LabelKey")
-                .Append(mlContext.Transforms.LoadImages(outputColumnName: "Features", imageFolder: @"C:\Users\Oliver\Desktop\SDNET", inputColumnName: "ImagePath"));
+                .Append(mlContext.Transforms.LoadImages(outputColumnName: "Features", imageFolder: _correctSDNET, inputColumnName: "ImagePath"));
 
             var data = preprocessingPipeline.Fit(imgData).Transform(imgData);
 
-            var options = new Options() { BatchSize = 30, Epochs = 1, Classes = 7, Architecture = ResNetArchitecture.ResNet50, FeatureColumnName = "Features", LabelColumnName = "LabelKey" };
-
-            var resnet = mlContext.MulticlassClassification.Trainers.ResNetClassificator(options);
+            var resnet = GetResnet(mlContext);
 
             var transformer = resnet.Fit(data);
 
@@ -178,7 +175,7 @@ namespace AlgorithmExtensions.Tests
         {
             var mlContext = new MLContext();
 
-            var data = GetInputData(mlContext);
+            var data = GetInputData(mlContext, _correctSDNET);
             var resnet = GetResnet(mlContext);
 
             var transformer = resnet.Fit(data);
@@ -190,17 +187,15 @@ namespace AlgorithmExtensions.Tests
         public void GetRowToRowMapper_TrainedResNetWrongInputSchema_ShouldThrowException()
         {
             var mlContext = new MLContext();
-            IEnumerable<ImgData> imgs = LoadImagesFromDirectory(folder: @"C:\Users\Oliver\Desktop\SDNET", useFolderNameAsLabel: true);
+            IEnumerable<ImgData> imgs = LoadImagesFromDirectory(folder: _correctSDNET, useFolderNameAsLabel: true);
             IDataView imgData = mlContext.Data.LoadFromEnumerable(imgs);
 
             var preprocessingPipeline = mlContext.Transforms.Conversion.MapValueToKey(inputColumnName: "Label", outputColumnName: "LabelKey")
-                .Append(mlContext.Transforms.LoadImages(outputColumnName: "Features", imageFolder: @"C:\Users\Oliver\Desktop\SDNET", inputColumnName: "ImagePath"));
+                .Append(mlContext.Transforms.LoadImages(outputColumnName: "Features", imageFolder: _correctSDNET, inputColumnName: "ImagePath"));
 
             var data = preprocessingPipeline.Fit(imgData).Transform(imgData);
 
-            var options = new Options() { BatchSize = 30, Epochs = 1, Classes = 7, Architecture = ResNetArchitecture.ResNet50, FeatureColumnName = "Features", LabelColumnName = "LabelKey" };
-
-            var resnet = mlContext.MulticlassClassification.Trainers.ResNetClassificator(options);
+            var resnet = GetResnet(mlContext);
 
             var transformer = resnet.Fit(data);
             Assert.Throws<MissingColumnException>(() => transformer.GetRowToRowMapper(imgData.Schema));
@@ -211,7 +206,7 @@ namespace AlgorithmExtensions.Tests
         {
             var mlContext = new MLContext();
 
-            var data = GetInputData(mlContext);
+            var data = GetInputData(mlContext, _correctSDNET);
             var resnet = GetResnet(mlContext);
 
             resnet.Fit(data).Transform(data);
@@ -222,7 +217,7 @@ namespace AlgorithmExtensions.Tests
         {
             var mlContext = new MLContext();
 
-            var data = GetInputData(mlContext);
+            var data = GetInputData(mlContext, _correctSDNET);
             var resnet = GetResnet(mlContext);
 
             var transformer = resnet.Fit(data);
@@ -244,7 +239,7 @@ namespace AlgorithmExtensions.Tests
         {
             var mlContext = new MLContext();
 
-            var data = GetInputData(mlContext);
+            var data = GetInputData(mlContext, _correctSDNET);
             var resnet = GetResnet(mlContext);
 
             var transformer = resnet.Fit(data);
@@ -266,8 +261,8 @@ namespace AlgorithmExtensions.Tests
         {
             var mlContext = new MLContext();
 
-            var data = GetInputData(mlContext);
-            var options = new Options() { BatchSize = 30, Epochs = 1, Classes = 7, Architecture = ResNetArchitecture.ResNet50, FeatureColumnName = "MissingFeatures", LabelColumnName = "LabelKey" };
+            var data = GetInputData(mlContext, _correctSDNET);
+            var options = new Options() { BatchSize = 30, Epochs = 1, Classes = 7, Height = 256, Width = 256, Architecture = ResNetArchitecture.ResNet50, FeatureColumnName = "MissingFeatures", LabelColumnName = "LabelKey" };
 
             var resnet = mlContext.MulticlassClassification.Trainers.ResNetClassificator(options);
 
@@ -279,12 +274,35 @@ namespace AlgorithmExtensions.Tests
         {
             var mlContext = new MLContext();
 
-            var data = GetInputData(mlContext);
-            var options = new Options() { BatchSize = 30, Epochs = 1, Classes = 7, Architecture = ResNetArchitecture.ResNet50, FeatureColumnName = "ImagePath", LabelColumnName = "LabelKey" };
+            var data = GetInputData(mlContext, _correctSDNET);
+            var options = new Options() { BatchSize = 30, Epochs = 1, Classes = 7, Height = 256, Width = 256, Architecture = ResNetArchitecture.ResNet50, FeatureColumnName = "ImagePath", LabelColumnName = "LabelKey" };
 
             var resnet = mlContext.MulticlassClassification.Trainers.ResNetClassificator(options);
 
             Assert.Throws<TypeMismatchException>(() => resnet.Fit(data));
+        }
+
+        [Fact]
+        public void Fit_ResNetWithIncorrectInputDimensions_ShouldThrowException()
+        {
+            var mlContext = new MLContext();
+
+            var data = GetInputData(mlContext, _correctSDNET);
+            var options = new Options() { BatchSize = 30, Epochs = 1, Classes = 7, Width = 10, Height = 10, Architecture = ResNetArchitecture.ResNet50, FeatureColumnName = "Features", LabelColumnName = "LabelKey" };
+
+            var resnet = mlContext.MulticlassClassification.Trainers.ResNetClassificator(options);
+            Assert.Throws<IncorrectDimensionsException>(() => resnet.Fit(data));
+        }
+
+        [Fact]
+        public void Fit_ResNetWithIncorrectPictureDimensionsInDataset_ShouldThrowException()
+        {
+            var mlContext = new MLContext();
+
+            var data = GetInputData(mlContext, _incorrectSDNET);
+            var resnet = GetResnet(mlContext);
+
+            Assert.Throws<IncorrectDimensionsException>(() => resnet.Fit(data));
         }
     }
 }
