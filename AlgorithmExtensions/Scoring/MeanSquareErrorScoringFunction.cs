@@ -7,7 +7,7 @@ namespace AlgorithmExtensions.Scoring
     /// Scoring function that calculates Mean Square Error of a regressor.
     /// </summary>
     /// <typeparam name="Tout">Object representing the structure of the output data from the model.</typeparam>
-    public class MeanSquareErrorScoringFunction<Tout> : IntegerScoringFunctionBase<Tout>, IScoringFunction where Tout : class, new()
+    public class MeanSquareErrorScoringFunction<Tout> : FloatScoringFunctionBase<Tout>, IScoringFunction where Tout : class, new()
     {
         private MLContext _mlContext;
         public MeanSquareErrorScoringFunction(MLContext mlContext)
@@ -27,8 +27,8 @@ namespace AlgorithmExtensions.Scoring
             var predictedProperty = GetPredictionProperty();
             var goldProperty = GetGoldProperty();
 
-            CheckIfPropertyTypeIsNumber(predictedProperty);
-            CheckIfPropertyTypeIsNumber(goldProperty);
+            CheckIfPropertyTypeIsFloat(predictedProperty);
+            CheckIfPropertyTypeIsFloat(goldProperty);
 
             var dataEnumerator = _mlContext.Data.CreateEnumerable<Tout>(predicted, true);
 

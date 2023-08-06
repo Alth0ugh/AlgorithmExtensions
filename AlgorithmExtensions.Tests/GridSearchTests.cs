@@ -7,6 +7,9 @@ using Microsoft.ML.Trainers.LightGbm;
 using Microsoft.ML.Transforms.Text;
 using AlgorithmExtensions.Exceptions;
 using System.Diagnostics;
+using Microsoft.ML.Transforms;
+using static Microsoft.ML.Transforms.ValueToKeyMappingEstimator;
+using Microsoft.ML.Trainers.FastTree;
 
 namespace AlgorithmExtensions.Tests
 {
@@ -308,6 +311,86 @@ namespace AlgorithmExtensions.Tests
 
             var gridSearch = new GridSearchCV(mlContext, pipelineTamplate, parameters, new AccuracyScoringFunction<ModelOutput>(mlContext));
             await Assert.ThrowsAsync<UniqueValueException>(async () => await gridSearch.Fit(trainingDataView));
+        }
+
+        [Fact]
+        public async Task Fit_GridSearchMulticlassClassification_ShouldSucceed()
+        {
+            var mlContext = new MLContext();
+            var data = mlContext.Data.LoadFromTextFile<GihubIssue>(@"C:\Users\Oliver\Desktop\issues.tsv", hasHeader: true);
+
+            var pipelineTemplate = new PipelineTemplate();
+
+            var mapValToKey = new Func<string, string, int, KeyOrdinality, bool, IDataView, ValueToKeyMappingEstimator>(mlContext.Transforms.Conversion.MapValueToKey);
+
+            pipelineTemplate.Add(mapValToKey, "key", new object[] { "Label", "Area", 1000000, KeyOrdinality.ByOccurrence, false, null });
+            var featurizeText = new Func<string, string, TextFeaturizingEstimator>(mlContext.Transforms.Text.FeaturizeText);
+            pipelineTemplate.Add(featurizeText, "featurize1", new object[] { "TitleFeaturized", "Title" });
+            pipelineTemplate.Add(featurizeText, "featurize2", new object[] { "DescriptionFeaturized", "Description" });
+            pipelineTemplate.Add(mlContext.Transforms.Concatenate, "concatenate", new object[] { "Features", new string[] { "TitleFeaturized", "DescriptionFeaturized" } });
+
+            var model = new Func<SdcaMaximumEntropyMulticlassTrainer.Options, SdcaMaximumEntropyMulticlassTrainer>(mlContext.MulticlassClassification.Trainers.SdcaMaximumEntropy);
+            pipelineTemplate.Add(model, "model");
+
+            var parameters = new ParameterProviderForModel();
+            parameters.Add("model", new ConstantParameterProvider(nameof(SdcaMaximumEntropyMulticlassTrainer.Options.MaximumNumberOfIterations), 1, 3),
+                new ConstantParameterProvider(nameof(SdcaMaximumEntropyMulticlassTrainer.Options.L1Regularization), null, 0.2f));
+
+            var f_score = new FScoringFunctionMulticlass<GitHubIssueOutput>(mlContext, 22, true);
+
+            var gridSearch = new GridSearchCV(mlContext, pipelineTemplate, parameters, new AccuracyScoringFunction<GitHubIssueOutput>(mlContext));
+            await gridSearch.Fit(data);
+
+            Assert.Equal(3, (int)gridSearch.BestParameters!["model"]
+                .Where(x => x.Name == nameof(SdcaMaximumEntropyMulticlassTrainer.Options.MaximumNumberOfIterations))
+                .Single().Value);
+            Assert.Equal(0.2f, (float)gridSearch.BestParameters!["model"]
+                .Where(x => x.Name == nameof(SdcaMaximumEntropyMulticlassTrainer.Options.L1Regularization))
+                .Single().Value);
+        }
+
+        [Fact]
+        public async Task Fit_GridSearchWithRegression_ShouldSucceed()
+        {
+            var mlContext = new MLContext();
+            IDataView dataView = mlContext.Data.LoadFromTextFile<TaxiTrip>(@"C:\Users\Oliver\Desktop\taxi-fare-train.csv", hasHeader: true, separatorChar: ',');
+
+            var pipeline = mlContext.Transforms.CopyColumns(outputColumnName: "Label", inputColumnName: "FareAmount")
+                .Append(mlContext.Transforms.Categorical.OneHotEncoding(outputColumnName: "VendorIdEncoded", inputColumnName: "VendorId"))
+                .Append(mlContext.Transforms.Categorical.OneHotEncoding(outputColumnName: "RateCodeEncoded", inputColumnName: "RateCode"))
+                .Append(mlContext.Transforms.Categorical.OneHotEncoding(outputColumnName: "PaymentTypeEncoded", inputColumnName: "PaymentType"))
+                .Append(mlContext.Transforms.Concatenate("Features", "VendorIdEncoded", "RateCodeEncoded", "PassengerCount", "TripDistance", "PaymentTypeEncoded"))
+                .Append(mlContext.Regression.Trainers.FastTree());
+
+            //var prediction = pipeline.Fit(dataView).Transform(dataView);
+            var evaluation = mlContext.Regression.CrossValidate(dataView, pipeline);
+            Debug.WriteLine("");
+        }
+
+        [Fact]
+        public async Task Fit_GridSearchWithRegression_ShouldSucceed2()
+        {
+            var mlContext = new MLContext();
+            IDataView dataView = mlContext.Data.LoadFromTextFile<TaxiTrip>(@"C:\Users\Oliver\Desktop\taxi-fare-train.csv", hasHeader: true, separatorChar: ',');
+
+            var pipelineTemplate = new PipelineTemplate();
+            pipelineTemplate.Add(mlContext.Transforms.CopyColumns, "copy", "Label", "FareAmount");
+            var oneHotDelegate = new Func<string, string, OneHotEncodingEstimator.OutputKind, int, KeyOrdinality, IDataView, OneHotEncodingEstimator>(mlContext.Transforms.Categorical.OneHotEncoding);
+            pipelineTemplate.Add(oneHotDelegate, "oneHot1", "VendorIdEncoded", "VendorId");
+            pipelineTemplate.Add(oneHotDelegate, "oneHot2", "RateCodeEncoded", "RateCode");
+            pipelineTemplate.Add(oneHotDelegate, "oneHot3", "PaymentTypeEncoded", "PaymentType");
+            pipelineTemplate.Add(mlContext.Transforms.Concatenate, "concat", new object[] { "Features", new string[] { "VendorIdEncoded", "RateCodeEncoded", "PassengerCount", "TripDistance", "PaymentTypeEncoded" } });
+            var fastTreeDelegate = new Func<FastTreeRegressionTrainer.Options, FastTreeRegressionTrainer>(mlContext.Regression.Trainers.FastTree);
+            pipelineTemplate.Add(fastTreeDelegate, "fastTree");
+
+            var parameters = new ParameterProviderForModel();
+            parameters.Add("fasTree", new ConstantParameterProvider(nameof(FastTreeRegressionTrainer.Options.LearningRate), 0.2d));
+
+            var gridSeach = new GridSearchCV(mlContext, pipelineTemplate, parameters, new MeanSquareErrorScoringFunction<TaxiPrediction>(mlContext));
+
+            await gridSeach.Fit(dataView);
+            //var evaluation = mlContext.Regression.Evaluate(prediction);
+            //Debug.WriteLine("");
         }
     }
 }

@@ -250,7 +250,8 @@ namespace AlgorithmExtensions.Hyperalgorithms
             {
                 try
                 {
-                    estimator = (IEstimator<ITransformer>)creationalDelegate.DynamicInvoke(pipelineItem.DefaultParameters)!;
+                    var parameters = AppendDefaultDelegateParameters(creationalDelegate, pipelineItem.DefaultParameters);
+                    estimator = (IEstimator<ITransformer>)creationalDelegate.DynamicInvoke(parameters)!;
                 }
                 catch
                 {
@@ -264,6 +265,20 @@ namespace AlgorithmExtensions.Hyperalgorithms
             }
 
             return estimator;
+        }
+
+
+        private object[] AppendDefaultDelegateParameters(Delegate creationalDelegate, object[]? parametersGiven)
+        {
+            var delegateParameters = creationalDelegate.Method.GetParameters();
+            var allParameters = new List<object>(parametersGiven ?? new object[0]);
+            var offset = creationalDelegate.Target is null ? 0 : 1;
+
+            for (var i = parametersGiven?.Length + offset ?? 0 + offset; i < delegateParameters.Length; i++)
+            {
+                allParameters.Add(delegateParameters[i].DefaultValue!);
+            }
+            return allParameters.ToArray();
         }
 
         /// <summary>
