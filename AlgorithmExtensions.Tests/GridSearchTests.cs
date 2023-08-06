@@ -256,9 +256,9 @@ namespace AlgorithmExtensions.Tests
 
             var epsilon = 0.00001f;
 
-            Assert.True((float)result[0] - 0.1f < epsilon);
-            Assert.True((float)result[1] - 0.01f < epsilon);
-            Assert.True((float)result[2] - 0.001f < epsilon);
+            Assert.True(Math.Abs((float)result[0] - 0.1f) < epsilon);
+            Assert.True(Math.Abs((float)result[1] - 0.01f) < epsilon);
+            Assert.True(Math.Abs((float)result[2] - 0.001f) < epsilon);
             Assert.Equal(3, result.Length);
         }
 
@@ -284,6 +284,30 @@ namespace AlgorithmExtensions.Tests
             Assert.Equal(2, (int)result[1]);
             Assert.Equal(3, (int)result[2]);
             Assert.Equal(3, result.Length);
+        }
+
+        [Fact]
+        public async Task Fit_GridSearchWithMutlipleProvidersForOneParameter_ShouldThrowException()
+        {
+            var mlContext = new MLContext();
+
+            IDataView trainingDataView = GetInputData(mlContext);
+
+            var pipelineTamplate = new PipelineTemplate();
+            var concatenateDefaultParameters = new object[]
+            {
+                "Features",
+                GetColumnConcatenation()
+            };
+            pipelineTamplate.Add(mlContext.Transforms.Concatenate, "concatenate", concatenateDefaultParameters);
+            pipelineTamplate.Add(new Func<LightGbmBinaryTrainer.Options, LightGbmBinaryTrainer>(mlContext.BinaryClassification.Trainers.LightGbm), "lgbm");
+
+            var parameters = new ParameterProviderForModel();
+            parameters.Add("lgbm", new ConstantParameterProvider(nameof(LightGbmBinaryTrainer.Options.NumberOfIterations), 1, 100),
+                new GeometricParameterProvider<int>(nameof(LightGbmBinaryTrainer.Options.NumberOfIterations), 1, 3, 10));
+
+            var gridSearch = new GridSearchCV(mlContext, pipelineTamplate, parameters, new AccuracyScoringFunction<ModelOutput>(mlContext));
+            await Assert.ThrowsAsync<UniqueValueException>(async () => await gridSearch.Fit(trainingDataView));
         }
     }
 }

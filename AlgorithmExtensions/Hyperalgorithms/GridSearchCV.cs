@@ -52,9 +52,12 @@ namespace AlgorithmExtensions.Hyperalgorithms
         /// </summary>
         /// <param name="data">Data to be trained on.</param>
         /// <returns>Task representing training of the model.</returns>
+        /// <exception cref="ParametersMissingException">Thrown when there are no parameters given to GridSearch.</exception>
+        /// <exception cref="UniqueValueException">Thrown when there are multiple value providers for a single parameter.</exception>
         public async Task Fit(IDataView data)
         {
             CheckParameters();
+            CheckParameterUniqueness();
 
             var pipelines = GenerateParameterCombinations().ToArray();
             var tasks = new Task<float>[pipelines.Length];
@@ -160,6 +163,18 @@ namespace AlgorithmExtensions.Hyperalgorithms
             if (correctValues.Count() == 0)
             {
                 throw new ParametersMissingException(string.Format(_checkParametersParametersNotGivenError, nameof(GridSearchCV)));
+            }
+        }
+
+        private void CheckParameterUniqueness()
+        {
+            foreach (var item in _parameters)
+            {
+                var uniqueValues = item.Value.DistinctBy(provider => provider.Name);
+                if (uniqueValues.Count() != item.Value.Length)
+                {
+                    throw new UniqueValueException($"There are multiple providers for one parameter for {item.Value}");
+                }
             }
         }
 
