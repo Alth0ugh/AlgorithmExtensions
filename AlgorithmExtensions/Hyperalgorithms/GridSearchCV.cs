@@ -48,6 +48,37 @@ namespace AlgorithmExtensions.Hyperalgorithms
         }
 
         /// <summary>
+        /// Fits model with all the combinations of parameters and finds the best one according to scoring function.
+        /// </summary>
+        /// <param name="data">Data to be trained on.</param>
+        /// <returns>Task representing training of the model.</returns>
+        public async Task Fit(IDataView data)
+        {
+            CheckParameters();
+
+            var pipelines = GenerateParameterCombinations().ToArray();
+            var tasks = new Task<float>[pipelines.Length];
+
+            for (int i = 0; i < pipelines.Length; i++)
+            {
+                var pipeline = pipelines[i];
+                tasks[i] = Task.Run(() => CrossValidateModel(pipeline, data));
+            }
+
+            var results = await Task.WhenAll(tasks);
+
+            var maxValue = results.Max();
+            var bestEstimator = 0;
+            while (maxValue != results[bestEstimator])
+            {
+                bestEstimator++;
+            }
+
+            BestEstimator = GenerateEstimatorChain(pipelines[bestEstimator]).Fit(data);
+            BestParameters = pipelines[bestEstimator];
+        }
+
+        /// <summary>
         /// Generates all combinations of parameter values for a model.
         /// </summary>
         /// <returns>Enumerable containing the parameter values combinations.</returns>
@@ -114,37 +145,6 @@ namespace AlgorithmExtensions.Hyperalgorithms
                     yield return subdomain.Prepend(i).ToList();
                 }
             }
-        }
-
-        /// <summary>
-        /// Fits model with all the combinations of parameters and finds the best one according to scoring function.
-        /// </summary>
-        /// <param name="data">Data to be trained on.</param>
-        /// <returns>Task representing training of the model.</returns>
-        public async Task Fit(IDataView data)
-        {
-            CheckParameters();
-
-            var pipelines = GenerateParameterCombinations().ToArray();
-            var tasks = new Task<float>[pipelines.Length];
-
-            for (int i = 0; i < pipelines.Length; i++)
-            {
-                var pipeline = pipelines[i];
-                tasks[i] = Task.Run(() => CrossValidateModel(pipeline, data));
-            }
-
-            var results = await Task.WhenAll(tasks);
-
-            var maxValue = results.Max();
-            var bestEstimator = 0;
-            while (maxValue != results[bestEstimator])
-            {
-                bestEstimator++;
-            }
-
-            BestEstimator = GenerateEstimatorChain(pipelines[bestEstimator]).Fit(data);
-            BestParameters = pipelines[bestEstimator];
         }
 
         private void CheckParameters()

@@ -12,7 +12,7 @@ namespace AlgorithmExtensions.Tests
 {
     public class GridSearchTests
     {
-        public IDataView GetInputData(MLContext mlContext)
+        private IDataView GetInputData(MLContext mlContext)
         {
             return mlContext.Data.LoadFromTextFile<ModelInput>(
                                             path: @"C:\Users\Oliver\Desktop\creditcard.csv",
@@ -22,7 +22,7 @@ namespace AlgorithmExtensions.Tests
                                             allowSparse: false);
         }
 
-        public string[] GetColumnConcatenation()
+        private string[] GetColumnConcatenation()
         {
             return new string[] { "Time", "V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9", "V10", "V11", "V12", "V13", "V14", "V15", "V16", "V17", "V18", "V19", "V20", "V21", "V22", "V23", "V24", "V25", "V26", "V27", "V28", "Amount" };
         }
@@ -55,7 +55,7 @@ namespace AlgorithmExtensions.Tests
                 .Where(x => x.Name == nameof(LinearSvmTrainer.Options.Lambda))
                 .Single().Value);
 
-            Debug.WriteLine("");
+            Assert.True(gridSearch.BestEstimator is not null);
         }
 
         [Fact]
@@ -83,6 +83,7 @@ namespace AlgorithmExtensions.Tests
             Assert.Equal(100, (int)gridSearch.BestParameters!["lgbm"]
                 .Where(x => x.Name == nameof(LightGbmBinaryTrainer.Options.NumberOfIterations))
                 .Single().Value);
+            Assert.True(gridSearch.BestEstimator is not null);
         }
 
         [Fact]

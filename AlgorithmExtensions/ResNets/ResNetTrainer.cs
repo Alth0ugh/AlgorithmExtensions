@@ -29,6 +29,56 @@ namespace AlgorithmExtensions.ResNets
         }
 
         /// <summary>
+        /// Fits the model.
+        /// </summary>
+        /// <param name="input">Data to fit the model on.</param>
+        /// <returns>Trained transformer.</returns>
+        /// <exception cref="MissingColumnException">Thrown when a column is missing from the input data.</exception>
+        /// <exception cref="TypeMismatchException">Thrown when the expected data type of a column is different from expected data type.</exception>
+        public ResNetTransformer Fit(IDataView input)
+        {
+            CheckInputColumns(input);
+
+            var featureColumn = input.Schema[_options.FeatureColumnName];
+            var labelColumn = input.Schema[_options.LabelColumnName];
+
+            var labelCursor = input.GetRowCursor(new[] { labelColumn });
+            var labelGetter = labelCursor.GetGetter<uint>(labelColumn);
+            var y = GetLabels(labelCursor, labelGetter, _options.Classes);
+
+            var featureCursor = input.GetRowCursor(new[] { featureColumn });
+            var imageDataGetter = featureCursor.GetGetter<MLImage>(featureColumn);
+            var x = GetInputData(featureCursor, imageDataGetter) / 255.0f;
+
+            _model.fit(x, y, batch_size: _options.BatchSize, epochs: _options.Epochs);
+
+            labelCursor.Dispose();
+            featureCursor.Dispose();
+
+            return new ResNetTransformer(_model, _options, input.Schema);
+        }
+
+        /// <summary>
+        /// Returns the schema of ouput with regards to the input data.
+        /// </summary>
+        /// <param name="inputSchema">Schema of the input data.</param>
+        /// <exception cref="DependencyException">Thrown when the output schema cannot be created due to some error in dependent library.</exception>
+        /// <returns>Output schema.</returns>
+        public SchemaShape GetOutputSchema(SchemaShape inputSchema)
+        {
+            try
+            {
+                var constructor = typeof(SchemaShape.Column).GetConstructor(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance, new Type[] { typeof(string), typeof(VectorKind), typeof(DataViewType), typeof(bool), typeof(SchemaShape) })!;
+                var predictionColumn = (SchemaShape.Column)constructor.Invoke(new object[] { nameof(ModelPrediction.Prediction), VectorKind.Scalar, NumberDataViewType.Single, false, null });
+                return new SchemaShape(new[] { predictionColumn });
+            }
+            catch (Exception ex)
+            {
+                throw new DependencyException("Could not create output schema due to dependency error.", ex);
+            }
+        }
+
+        /// <summary>
         /// Generates ResNet with a given architecture.
         /// </summary>
         /// <param name="architecture">Architecture of ResNet.</param>
@@ -105,36 +155,6 @@ namespace AlgorithmExtensions.ResNets
         }
 
         /// <summary>
-        /// Fits the model.
-        /// </summary>
-        /// <param name="input">Data to fit the model on.</param>
-        /// <returns>Trained transformer.</returns>
-        /// <exception cref="MissingColumnException">Thrown when a column is missing from the input data.</exception>
-        /// <exception cref="TypeMismatchException">Thrown when the expected data type of a column is different from expected data type.</exception>
-        public ResNetTransformer Fit(IDataView input)
-        {
-            CheckInputColumns(input);
-
-            var featureColumn = input.Schema[_options.FeatureColumnName];
-            var labelColumn = input.Schema[_options.LabelColumnName];
-
-            var labelCursor = input.GetRowCursor(new[] { labelColumn });
-            var labelGetter = labelCursor.GetGetter<uint>(labelColumn);
-            var y = GetLabels(labelCursor, labelGetter, _options.Classes);
-
-            var featureCursor = input.GetRowCursor(new[] { featureColumn });
-            var imageDataGetter = featureCursor.GetGetter<MLImage>(featureColumn);
-            var x = GetInputData(featureCursor, imageDataGetter) / 255.0f;
-
-            _model.fit(x, y, batch_size: _options.BatchSize, epochs: _options.Epochs);
-
-            labelCursor.Dispose();
-            featureCursor.Dispose();
-
-            return new ResNetTransformer(_model, _options, input.Schema);
-        }
-
-        /// <summary>
         /// Checks if the input columns are present and in correct data type.
         /// </summary>
         /// <param name="input">Input data.</param>
@@ -167,26 +187,6 @@ namespace AlgorithmExtensions.ResNets
             if (labelColumnInstance.Type.RawType != typeof(uint))
             {
                 throw new TypeMismatchException(string.Format(_checkInputColumnsTypeMismatchError, typeof(MLImage), _options.LabelColumnName, labelColumnInstance.Type.RawType));
-            }
-        }
-
-        /// <summary>
-        /// Returns the schema of ouput with regards to the input data.
-        /// </summary>
-        /// <param name="inputSchema">Schema of the input data.</param>
-        /// <exception cref="DependencyException">Thrown when the output schema cannot be created due to some error in dependent library.</exception>
-        /// <returns>Output schema.</returns>
-        public SchemaShape GetOutputSchema(SchemaShape inputSchema)
-        {
-            try
-            {
-                var constructor = typeof(SchemaShape.Column).GetConstructor(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance, new Type[] { typeof(string), typeof(VectorKind), typeof(DataViewType), typeof(bool), typeof(SchemaShape) })!;
-                var predictionColumn = (SchemaShape.Column)constructor.Invoke(new object[] { nameof(ModelPrediction.Prediction), VectorKind.Scalar, NumberDataViewType.Single, false, null });
-                return new SchemaShape(new[] { predictionColumn });
-            }
-            catch (Exception ex)
-            {
-                throw new DependencyException("Could not create output schema due to dependency error.", ex);
             }
         }
     }
