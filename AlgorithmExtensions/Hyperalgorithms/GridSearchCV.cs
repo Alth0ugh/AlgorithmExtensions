@@ -17,6 +17,7 @@ namespace AlgorithmExtensions.Hyperalgorithms
         private IScoringFunction _scoringFunction;
         private int _crossValidationSplits;
         private MLContext _mlContext;
+        private bool _maximize;
 
         private const string _checkParametersParametersNotGivenError = "No parameters were given to {0}";
         private const string _creationalDelegateError = "Creational delegate with name {0} did not create any type of estimator or default parameters given were incorrect.";
@@ -38,13 +39,15 @@ namespace AlgorithmExtensions.Hyperalgorithms
         /// <param name="parameters">Parameter provider for the model.</param>
         /// <param name="scoringFunction">Scoring function to be used for scoring the models.</param>
         /// <param name="crossValidationSplits">Number of splits for cross-validation.</param>
-        public GridSearchCV(MLContext mlContext, PipelineTemplate template, ParameterProviderForModel parameters, IScoringFunction scoringFunction, int crossValidationSplits = 5)
+        /// <param name="maximize">True if maximizing scoring function, otherwise false.</param>
+        public GridSearchCV(MLContext mlContext, PipelineTemplate template, ParameterProviderForModel parameters, IScoringFunction scoringFunction, int crossValidationSplits = 5, bool maximize = true)
         {
             _template = template;
             _parameters = parameters;
             _scoringFunction = scoringFunction;
             _mlContext = mlContext;
             _crossValidationSplits = crossValidationSplits;
+            _maximize = maximize;
         }
 
         /// <summary>
@@ -70,9 +73,9 @@ namespace AlgorithmExtensions.Hyperalgorithms
 
             var results = await Task.WhenAll(tasks);
 
-            var maxValue = results.Max();
+            var bestValue = _maximize ? results.Max() : results.Min();
             var bestEstimator = 0;
-            while (maxValue != results[bestEstimator])
+            while (bestValue != results[bestEstimator])
             {
                 bestEstimator++;
             }
