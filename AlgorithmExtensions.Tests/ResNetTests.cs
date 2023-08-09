@@ -8,8 +8,8 @@ namespace AlgorithmExtensions.Tests
 {
     public class ResNetTests
     {
-        public static readonly string CorrectSDNET = @"..\..\..\..\TestData\SDNET";
-        private static readonly string IncorrectSDNET = @"..\..\..\..\TestData\IncorrectSDNET";
+        public static readonly string CorrectSDNET = @"..\..\..\TestData\SDNET";
+        private static readonly string IncorrectSDNET = @"..\..\..\TestData\IncorrectSDNET";
 
         public static IEnumerable<ImgData> LoadImagesFromDirectory(string folderParameter, bool useFolderNameAsLabel = true)
         {
@@ -219,12 +219,12 @@ namespace AlgorithmExtensions.Tests
             try
             {
                 _ = outputSchema["Prediction"];
+                _ = outputSchema["Gold"];
             }
             catch
             {
                 Assert.Fail("Column Prediction is not present in the output schema.");
             }
-            Assert.True(data.Schema.Count == outputSchema.Count - 1);
         }
 
         [Fact]
@@ -241,12 +241,12 @@ namespace AlgorithmExtensions.Tests
             try
             {
                 _ = outputSchema["Prediction"];
+                _ = outputSchema["Gold"];
             }
             catch
             {
                 Assert.Fail("Column Prediction is not present in the output schema.");
             }
-            Assert.True(data.Schema.Count == outputSchema.Count - 1);
         }
 
         [Fact]

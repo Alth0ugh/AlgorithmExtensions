@@ -35,18 +35,27 @@ namespace AlgorithmExtensions.ResNets
         public bool IsRowToRowMapper => true;
 
         public DataViewSchema GetOutputSchema(DataViewSchema inputSchema)
-        {
+        {    
             if (inputSchema == null)
             {
                 throw new ArgumentException($"Parameter {nameof(inputSchema)} cannot be null");
             }
+            var labelColumns = from column in inputSchema
+                               where column.Name == _options.LabelColumnName
+                               select column;
+
             var builder = new DataViewSchema.Builder();
-            foreach (var column in inputSchema)
+
+            if (labelColumns.Count() > 0)
             {
-                builder.AddColumn(column.Name, column.Type, column.Annotations);
+                builder.AddColumn(nameof(ModelPredictionWithGold.Prediction), NumberDataViewType.Single);
+                builder.AddColumn(nameof(ModelPredictionWithGold.Gold), NumberDataViewType.Single);
+            }
+            else
+            {
+                builder.AddColumn(nameof(ModelPredictionWithoutGold.Prediction), NumberDataViewType.Single);
             }
 
-            builder.AddColumn(nameof(ModelPredictionWithoutGold.Prediction), NumberDataViewType.Single);
             return builder.ToSchema();
         }
 

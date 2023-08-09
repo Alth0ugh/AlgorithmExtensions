@@ -19,7 +19,7 @@ namespace AlgorithmExtensions.Tests
         private IDataView GetInputData(MLContext mlContext)
         {
             return mlContext.Data.LoadFromTextFile<ModelInput>(
-                                            path: @"..\..\..\..\TestData\creditcard.csv",
+                                            path: @"..\..\..\TestData\creditcard.csv",
                                             hasHeader: true,
                                             separatorChar: ',',
                                             allowQuoting: true,
@@ -35,7 +35,7 @@ namespace AlgorithmExtensions.Tests
         public async Task Fit_GridSearchWithTwoParameterProviders_ShouldSucceed()
         {
             var mlContext = new MLContext();
-            var dataView = mlContext.Data.LoadFromTextFile<YelpInput>(@"..\..\..\..\TestData\yelp_labelled.txt");
+            var dataView = mlContext.Data.LoadFromTextFile<YelpInput>(@"..\..\..\TestData\yelp_labelled.txt");
 
             var pipelineTemplate = new PipelineTemplate();
             var del = new Func<string, string, TextFeaturizingEstimator>(mlContext.Transforms.Text.FeaturizeText);
@@ -354,7 +354,7 @@ namespace AlgorithmExtensions.Tests
         public async Task Fit_GridSearchWithRegression_ShouldSucceed()
         {
             var mlContext = new MLContext();
-            IDataView dataView = mlContext.Data.LoadFromTextFile<TaxiTrip>(@"..\..\..\..\TestData\taxi-fare-train.csv", hasHeader: true, separatorChar: ',');
+            IDataView dataView = mlContext.Data.LoadFromTextFile<TaxiTrip>(@"..\..\..\TestData\taxi-fare-train.csv", hasHeader: true, separatorChar: ',');
 
             var pipelineTemplate = new PipelineTemplate();
             pipelineTemplate.Add(mlContext.Transforms.CopyColumns, "copy", "Label", "FareAmount");

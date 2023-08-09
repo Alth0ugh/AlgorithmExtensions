@@ -22,7 +22,7 @@ namespace AlgorithmExtensions.ResNets
         private const string _checkInputColumnsColumnMissingError = "Column named {0} is missing from the input";
         private const string _checkInputColumnsTypeMismatchError = "Expected type {0} for {1} but got {2}";
 
-        public ResNetTrainer(Options options)
+        internal ResNetTrainer(Options options)
         {
             _options = options;
             _model = GenerateModel(options.Architecture);
