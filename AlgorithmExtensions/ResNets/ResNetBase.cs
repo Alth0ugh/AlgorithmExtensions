@@ -108,7 +108,7 @@ namespace AlgorithmExtensions.ResNets
                         return new Pixel(r, g, b, a);
                     }
                 default:
-                    throw new UnknownPixelFormatException("Pixel format of input images is unknown. Use either RGBA or BGRA."); // TODO
+                    throw new UnknownPixelFormatException("Pixel format of input images is unknown. Use either RGBA or BGRA.");
             }
         }
 

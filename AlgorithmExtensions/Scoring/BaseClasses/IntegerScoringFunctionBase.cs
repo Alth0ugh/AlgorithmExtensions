@@ -36,7 +36,6 @@ namespace AlgorithmExtensions.Scoring.BaseClasses
         /// <returns>Unpacked numeric value.</returns>
         public int UnpackPropertyValue(object value)
         {
-            //TODO: Add exception
             if (value is int intVal)
             {
                 return intVal;
