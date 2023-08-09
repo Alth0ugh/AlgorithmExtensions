@@ -10,6 +10,8 @@ using System.Diagnostics;
 using Microsoft.ML.Transforms;
 using static Microsoft.ML.Transforms.ValueToKeyMappingEstimator;
 using Microsoft.ML.Trainers.FastTree;
+using AlgorithmExtensions.Extensions;
+using AlgorithmExtensions.ResNets;
 
 namespace AlgorithmExtensions.Tests
 {
@@ -18,7 +20,7 @@ namespace AlgorithmExtensions.Tests
         private IDataView GetInputData(MLContext mlContext)
         {
             return mlContext.Data.LoadFromTextFile<ModelInput>(
-                                            path: @"C:\Users\Oliver\Desktop\creditcard.csv",
+                                            path: @"..\..\..\..\TestData\creditcard.csv",
                                             hasHeader: true,
                                             separatorChar: ',',
                                             allowQuoting: true,
@@ -34,7 +36,7 @@ namespace AlgorithmExtensions.Tests
         public async Task Fit_GridSearchWithTwoParameterProviders_ShouldSucceed()
         {
             var mlContext = new MLContext();
-            var dataView = mlContext.Data.LoadFromTextFile<YelpInput>(@"C:\Users\Oliver\Desktop\sentiment labelled sentences\sentiment labelled sentences\yelp_labelled.txt");
+            var dataView = mlContext.Data.LoadFromTextFile<YelpInput>(@"..\..\..\..\TestData\yelp_labelled.txt");
 
             var pipelineTemplate = new PipelineTemplate();
             var del = new Func<string, string, TextFeaturizingEstimator>(mlContext.Transforms.Text.FeaturizeText);
@@ -353,25 +355,7 @@ namespace AlgorithmExtensions.Tests
         public async Task Fit_GridSearchWithRegression_ShouldSucceed()
         {
             var mlContext = new MLContext();
-            IDataView dataView = mlContext.Data.LoadFromTextFile<TaxiTrip>(@"C:\Users\Oliver\Desktop\taxi-fare-train.csv", hasHeader: true, separatorChar: ',');
-
-            var pipeline = mlContext.Transforms.CopyColumns(outputColumnName: "Label", inputColumnName: "FareAmount")
-                .Append(mlContext.Transforms.Categorical.OneHotEncoding(outputColumnName: "VendorIdEncoded", inputColumnName: "VendorId"))
-                .Append(mlContext.Transforms.Categorical.OneHotEncoding(outputColumnName: "RateCodeEncoded", inputColumnName: "RateCode"))
-                .Append(mlContext.Transforms.Categorical.OneHotEncoding(outputColumnName: "PaymentTypeEncoded", inputColumnName: "PaymentType"))
-                .Append(mlContext.Transforms.Concatenate("Features", "VendorIdEncoded", "RateCodeEncoded", "PassengerCount", "TripDistance", "PaymentTypeEncoded"))
-                .Append(mlContext.Regression.Trainers.FastTree());
-
-            //var prediction = pipeline.Fit(dataView).Transform(dataView);
-            var evaluation = mlContext.Regression.CrossValidate(dataView, pipeline);
-            Debug.WriteLine("");
-        }
-
-        [Fact]
-        public async Task Fit_GridSearchWithRegression_ShouldSucceed2()
-        {
-            var mlContext = new MLContext();
-            IDataView dataView = mlContext.Data.LoadFromTextFile<TaxiTrip>(@"C:\Users\Oliver\Desktop\taxi-fare-train.csv", hasHeader: true, separatorChar: ',');
+            IDataView dataView = mlContext.Data.LoadFromTextFile<TaxiTrip>(@"..\..\..\..\TestData\taxi-fare-train.csv", hasHeader: true, separatorChar: ',');
 
             var pipelineTemplate = new PipelineTemplate();
             pipelineTemplate.Add(mlContext.Transforms.CopyColumns, "copy", "Label", "FareAmount");
@@ -391,6 +375,22 @@ namespace AlgorithmExtensions.Tests
             await gridSeach.Fit(dataView);
             //var evaluation = mlContext.Regression.Evaluate(prediction);
             //Debug.WriteLine("");
+        }
+
+        [Fact]
+        public async Task Fit_GridSearchWithResnet_ShouldSucceed()
+        {
+            var mlContext = new MLContext();
+            IDataView dataView = ResNetTests.GetInputData(mlContext, ResNetTests.CorrectSDNET);
+
+            var pipelineTemplate = new PipelineTemplate();
+            pipelineTemplate.Add(mlContext.MulticlassClassification.Trainers.ResNetClassificator, "resnet", new Options() { LabelColumnName = "LabelKey", Height = 256, Width = 256 });
+
+            var parameters = new ParameterProviderForModel();
+            parameters.Add("resnet", new ConstantParameterProvider(nameof(Options.Epochs), 1));
+
+            var gridSeach = new GridSearchCV(mlContext, pipelineTemplate, parameters, new AccuracyScoringFunction<ResNetPrediction>(mlContext));
+            await gridSeach.Fit(dataView);
         }
     }
 }

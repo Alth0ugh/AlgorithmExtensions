@@ -71,7 +71,7 @@ namespace AlgorithmExtensions.ResNets
             try
             {
                 var constructor = typeof(SchemaShape.Column).GetConstructor(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance, new Type[] { typeof(string), typeof(VectorKind), typeof(DataViewType), typeof(bool), typeof(SchemaShape) })!;
-                var predictionColumn = (SchemaShape.Column)constructor.Invoke(new object[] { nameof(ModelPrediction.Prediction), VectorKind.Scalar, NumberDataViewType.Single, false, null });
+                var predictionColumn = (SchemaShape.Column)constructor.Invoke(new object[] { nameof(ModelPredictionWithoutGold.Prediction), VectorKind.Scalar, NumberDataViewType.Single, false, null });
                 return new SchemaShape(new[] { predictionColumn });
             }
             catch (Exception ex)
@@ -196,7 +196,7 @@ namespace AlgorithmExtensions.ResNets
             var labelColumnInstance = labelColumn.Single();
             if (labelColumnInstance.Type.RawType != typeof(uint))
             {
-                throw new TypeMismatchException(string.Format(_checkInputColumnsTypeMismatchError, typeof(MLImage), _options.LabelColumnName, labelColumnInstance.Type.RawType));
+                throw new TypeMismatchException(string.Format(_checkInputColumnsTypeMismatchError, typeof(uint), _options.LabelColumnName, labelColumnInstance.Type.RawType));
             }
         }
     }

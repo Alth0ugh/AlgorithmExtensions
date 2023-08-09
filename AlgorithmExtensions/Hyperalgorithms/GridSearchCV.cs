@@ -230,7 +230,8 @@ namespace AlgorithmExtensions.Hyperalgorithms
             var creationalDelegate = pipelineItem.CreationalDelegate;
             var delegateParameters = creationalDelegate.Method.GetParameters();
             var optionTypes = from parameter in delegateParameters 
-                              where parameter.ParameterType.IsSubclassOf(typeof(TrainerInputBase)) 
+                              where parameter.ParameterType.IsSubclassOf(typeof(TrainerInputBase)) || 
+                                typeof(IOptions).IsAssignableFrom(parameter.ParameterType)
                               select parameter;
 
             var optionTypesCount = optionTypes.Count();
@@ -288,9 +289,9 @@ namespace AlgorithmExtensions.Hyperalgorithms
         /// <param name="pipelineItem">Item that options are generated for.</param>
         /// <param name="parameterCollection">Parameters for model.</param>
         /// <returns>Options with set parameter values.</returns>
-        private TrainerInputBase GenerateAndSetOptions(Type optionType, PipelineItem pipelineItem, Dictionary<string, ParameterInstance[]> parameterCollection)
+        private object GenerateAndSetOptions(Type optionType, PipelineItem pipelineItem, Dictionary<string, ParameterInstance[]> parameterCollection)
         {
-            var options = (TrainerInputBase)Activator.CreateInstance(optionType)!; //TODO raise exception when options cannot be created
+            var options = Activator.CreateInstance(optionType)!;
             var defaultOptions = pipelineItem.DefaultOptions;
 
             if (defaultOptions != null)
@@ -315,14 +316,14 @@ namespace AlgorithmExtensions.Hyperalgorithms
         /// <param name="options">Options to set default values of.</param>
         /// <param name="defaultOptions">Options with default values set.</param>
         /// <exception cref="OptionTypeMismatchException">Thrown if options and defaultOptions do not match in type.</exception>
-        private void SetDefaultOptions(TrainerInputBase options, TrainerInputBase defaultOptions)
+        private void SetDefaultOptions(object options, object defaultOptions)
         {
             if (options.GetType() != defaultOptions.GetType())
             {
                 throw new OptionTypeMismatchException("Model option type and supplied default option type does not match", options.GetType(), defaultOptions.GetType());
             }
 
-            var properties = options.GetType().GetProperties();
+            var properties = options.GetType().GetFields();
             foreach (var property in properties)
             {
                 property.SetValue(options, property.GetValue(defaultOptions));
@@ -336,7 +337,7 @@ namespace AlgorithmExtensions.Hyperalgorithms
         /// <param name="options">Options to be used for instantiation.</param>
         /// <returns>Instance of the estimator.</returns>
         /// <exception cref="IncorrectCreationalDelegateException">Thrown if the creational delegate is in incorrect format (function with input parameter of type TrainerInputBase)</exception>
-        private IEstimator<ITransformer> MakeInstanceOfEstimator(Delegate creationalDelegate, TrainerInputBase options)
+        private IEstimator<ITransformer> MakeInstanceOfEstimator(Delegate creationalDelegate, object options)
         {
             try
             {
@@ -359,7 +360,7 @@ namespace AlgorithmExtensions.Hyperalgorithms
         /// <param name="parameterName">Name of the property to be set.</param>
         /// <param name="parameterValue">Value of the property.</param>
         /// <exception cref="IncorrectOptionParameterException">Thrown if the property is not found.</exception>
-        private void SetPropertyOfOptions(TrainerInputBase options, string parameterName, object parameterValue)
+        private void SetPropertyOfOptions(object options, string parameterName, object parameterValue)
         {
             var property = from prop in options.GetType().GetFields()
                            where prop.Name == parameterName

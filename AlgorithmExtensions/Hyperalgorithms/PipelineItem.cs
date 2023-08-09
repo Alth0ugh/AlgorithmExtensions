@@ -22,7 +22,7 @@ namespace AlgorithmExtensions.Hyperalgorithms
         /// <summary>
         /// Default options for estimator.
         /// </summary>
-        public TrainerInputBase? DefaultOptions { get; set; }
+        public object? DefaultOptions { get; set; }
 
         /// <summary>
         /// Creates new instance of PipelineItem.
@@ -31,7 +31,7 @@ namespace AlgorithmExtensions.Hyperalgorithms
         /// <param name="name">Name assiciated with the item.</param>
         /// <param name="defaultParameters">Default parameters if the item is transformer.</param>
         /// <param name="defaultOptions">Default options if the item is estimator.</param>
-        public PipelineItem(Delegate creationalDelegate, string name = "", object[]? defaultParameters = null, TrainerInputBase? defaultOptions = null)
+        public PipelineItem(Delegate creationalDelegate, string name = "", object[]? defaultParameters = null, object? defaultOptions = null)
         {
             CreationalDelegate = creationalDelegate;
             Name = name;

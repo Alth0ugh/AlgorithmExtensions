@@ -1,4 +1,5 @@
-﻿using Tensorflow;
+﻿using AlgorithmExtensions.Hyperalgorithms;
+using Microsoft.ML.Trainers;
 
 namespace AlgorithmExtensions.ResNets
 {
@@ -17,16 +18,16 @@ namespace AlgorithmExtensions.ResNets
     /// <summary>
     /// Options for ResNet.
     /// </summary>
-    public class Options
+    public class Options : IOptions
     {
-        public ResNetArchitecture Architecture { get; set; } = ResNetArchitecture.ResNet50;
-        public int Classes { get; set; }
-        public string LabelColumnName { get; set; } = "Label";
-        public string FeatureColumnName { get; set; } = "Features";
-        public int BatchSize { get; set; }
-        public int Epochs { get; set; }
-        public float LearningRate { get; set; } = 0.0001f;
-        public int Height { get; set; } = 224;
-        public int Width { get; set; } = 224;
+        public ResNetArchitecture Architecture = ResNetArchitecture.ResNet50;
+        public int Classes = 10;
+        public string LabelColumnName = "Label";
+        public string FeatureColumnName = "Features";
+        public int BatchSize = -1;
+        public int Epochs = 10;
+        public float LearningRate = 0.0001f;
+        public int Height = 224;
+        public int Width = 224;
     }
 }

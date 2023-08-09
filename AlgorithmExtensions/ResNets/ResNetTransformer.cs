@@ -46,7 +46,7 @@ namespace AlgorithmExtensions.ResNets
                 builder.AddColumn(column.Name, column.Type, column.Annotations);
             }
 
-            builder.AddColumn(nameof(ModelPrediction.Prediction), NumberDataViewType.Single);
+            builder.AddColumn(nameof(ModelPredictionWithoutGold.Prediction), NumberDataViewType.Single);
             return builder.ToSchema();
         }
 
@@ -99,32 +99,59 @@ namespace AlgorithmExtensions.ResNets
 
         public IDataView Transform(IDataView input)
         {
+            var labelColumns = from column in input.Schema
+                               where column.Name == _options.LabelColumnName
+                               select column;
+            if (labelColumns.Count() > 0)
+            {
+                return TransformWithGold(input);
+            }
+            else
+            {
+                return TransformWithoutGold(input);
+            }
+            
+        }
+
+        private IDataView TransformWithGold(IDataView input)
+        {
             var featureColumn = input.Schema[_options.FeatureColumnName];
             var labelColumn = input.Schema[_options.LabelColumnName];
+
+            var labelCursor = input.GetRowCursor(new[] { labelColumn });
+            var labelGetter = labelCursor.GetGetter<uint>(labelColumn);
+            var y = GetLabels(labelCursor, labelGetter, _options.Classes);
 
             var featureCursor = input.GetRowCursor(new[] { featureColumn });
             var imageDataGetter = featureCursor.GetGetter<MLImage>(featureColumn);
             var x = GetInputData(featureCursor, imageDataGetter, _options.Height, _options.Width) / 255.0f;
 
             var modelPrediction = _model.predict(x);
-            var predictions = GetPredictions(modelPrediction);
+            var predictions = GetClassesFromOneHot(modelPrediction);
+            var golds = GetClassesFromOneHot(y);
 
-            var result = predictions.Select(x => new ModelPrediction() { Prediction = x });
+            var result = new List<ModelPredictionWithGold>();
+
+            for (int i = 0; i < predictions.Length; i++)
+            {
+                result.Add(new ModelPredictionWithGold() { Gold = golds[i], Prediction = predictions[i] });
+            }
 
             return _mlContext.Data.LoadFromEnumerable(result);
         }
 
-        /// <summary>
-        /// Take the data in, make transformations, output the data.
-        /// </summary>
-        /// <param name="x">NDArray containing the input data.</param>
-        /// <returns>Transformed data.</returns>
-        public IDataView Transform(NDArray x)
+        private IDataView TransformWithoutGold(IDataView input)
         {
-            var modelPrediction = _model.predict(x);
-            var predictions = GetPredictions(modelPrediction);
+            var featureColumn = input.Schema[_options.FeatureColumnName];
 
-            var result = predictions.Select(x => new ModelPrediction() { Prediction = x });
+            var featureCursor = input.GetRowCursor(new[] { featureColumn });
+            var imageDataGetter = featureCursor.GetGetter<MLImage>(featureColumn);
+            var x = GetInputData(featureCursor, imageDataGetter, _options.Height, _options.Width) / 255.0f;
+
+            var modelPrediction = _model.predict(x);
+            var predictions = GetClassesFromOneHot(modelPrediction);
+
+            var result = predictions.Select(x => new ModelPredictionWithoutGold() { Prediction = x });
 
             return _mlContext.Data.LoadFromEnumerable(result);
         }
@@ -140,13 +167,13 @@ namespace AlgorithmExtensions.ResNets
             var x = new NDArray(new Shape(1, image.Height, image.Width, 3), TF_DataType.TF_UINT8);
             x[0] = pixels;
             x /= 255.0f;
-            var predictions = GetPredictions(_model.predict(x));
-            var result = predictions.Select(x => new ModelPrediction() { Prediction = x });
+            var predictions = GetClassesFromOneHot(_model.predict(x));
+            var result = predictions.Select(x => new ModelPredictionWithoutGold() { Prediction = x });
 
             return _mlContext.Data.LoadFromEnumerable(result);
         }
 
-        private uint[] GetPredictions(Tensors tensors)
+        private uint[] GetClassesFromOneHot(Tensors tensors)
         {
             Tensor[] ten = tensors;
             var count = tensors.shape[0];
