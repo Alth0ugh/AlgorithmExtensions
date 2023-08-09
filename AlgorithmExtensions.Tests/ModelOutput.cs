@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace AlgorithmExtensions.Tests
 {
-    public class ModelOutput : ModelInput
+    public class ModelOutput : CreditCardInput
     {
         [Prediction]
         [ColumnName("PredictedLabel")]

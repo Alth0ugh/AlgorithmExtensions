@@ -18,7 +18,7 @@ namespace AlgorithmExtensions.Tests
     {
         private IDataView GetInputData(MLContext mlContext)
         {
-            return mlContext.Data.LoadFromTextFile<ModelInput>(
+            return mlContext.Data.LoadFromTextFile<CreditCardInput>(
                                             path: @"..\..\..\TestData\creditcard.csv",
                                             hasHeader: true,
                                             separatorChar: ',',

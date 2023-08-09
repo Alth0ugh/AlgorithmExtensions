@@ -1,14 +1,9 @@
 ﻿using AlgorithmExtensions.Attributes;
 using Microsoft.ML.Data;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace AlgorithmExtensions.Tests
 {
-    public class ModelInput
+    public class CreditCardInput
     {
         [ColumnName("Time"), LoadColumn(0)]
         public float Time { get; set; }

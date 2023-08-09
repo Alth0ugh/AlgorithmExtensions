@@ -45,7 +45,7 @@ namespace AlgorithmExtensions.Tests
 
         public static ResNetTrainer GetResnet(MLContext mlContext)
         {
-            var options = new Options() { BatchSize = 30, Epochs = 1, Classes = 7, Height = 256, Width = 256, Architecture = ResNetArchitecture.ResNet50, FeatureColumnName = "Features", LabelColumnName = "LabelKey" };
+            var options = new Options() { Epochs = 1, Classes = 7, Height = 256, Width = 256, Architecture = ResNetArchitecture.ResNet50, FeatureColumnName = "Features", LabelColumnName = "LabelKey" };
 
             var resnet = mlContext.MulticlassClassification.Trainers.ResNetClassificator(options);
             return resnet;
@@ -255,7 +255,7 @@ namespace AlgorithmExtensions.Tests
             var mlContext = new MLContext();
 
             var data = GetInputData(mlContext, CorrectSDNET);
-            var options = new Options() { BatchSize = 30, Epochs = 1, Classes = 7, Height = 256, Width = 256, Architecture = ResNetArchitecture.ResNet50, FeatureColumnName = "MissingFeatures", LabelColumnName = "LabelKey" };
+            var options = new Options() { Epochs = 1, Classes = 7, Height = 256, Width = 256, Architecture = ResNetArchitecture.ResNet50, FeatureColumnName = "MissingFeatures", LabelColumnName = "LabelKey" };
 
             var resnet = mlContext.MulticlassClassification.Trainers.ResNetClassificator(options);
 
@@ -268,7 +268,7 @@ namespace AlgorithmExtensions.Tests
             var mlContext = new MLContext();
 
             var data = GetInputData(mlContext, CorrectSDNET);
-            var options = new Options() { BatchSize = 30, Epochs = 1, Classes = 7, Height = 256, Width = 256, Architecture = ResNetArchitecture.ResNet50, FeatureColumnName = "ImagePath", LabelColumnName = "LabelKey" };
+            var options = new Options() { Epochs = 1, Classes = 7, Height = 256, Width = 256, Architecture = ResNetArchitecture.ResNet50, FeatureColumnName = "ImagePath", LabelColumnName = "LabelKey" };
 
             var resnet = mlContext.MulticlassClassification.Trainers.ResNetClassificator(options);
 
@@ -281,7 +281,7 @@ namespace AlgorithmExtensions.Tests
             var mlContext = new MLContext();
 
             var data = GetInputData(mlContext, CorrectSDNET);
-            var options = new Options() { BatchSize = 30, Epochs = 1, Classes = 7, Width = 10, Height = 10, Architecture = ResNetArchitecture.ResNet50, FeatureColumnName = "Features", LabelColumnName = "LabelKey" };
+            var options = new Options() { Epochs = 1, Classes = 7, Width = 10, Height = 10, Architecture = ResNetArchitecture.ResNet50, FeatureColumnName = "Features", LabelColumnName = "LabelKey" };
 
             var resnet = mlContext.MulticlassClassification.Trainers.ResNetClassificator(options);
             Assert.Throws<IncorrectDimensionsException>(() => resnet.Fit(data));
