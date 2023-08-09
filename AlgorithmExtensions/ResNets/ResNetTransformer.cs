@@ -73,7 +73,6 @@ namespace AlgorithmExtensions.ResNets
 
         public void Save(ModelSaveContext ctx)
         {
-            throw new NotImplementedException();
             Save(Directory.GetCurrentDirectory(), "model");
         }
 
@@ -84,21 +83,9 @@ namespace AlgorithmExtensions.ResNets
         /// <exception cref="IOException">Thrown when the model is saved unsucessfully.</exception>
         public void Save(string path, string modelName)
         {
-            throw new NotImplementedException();
             try
             {
                 _model.save(Path.Combine(path, modelName));
-                var serializer = new JsonSerializer();
-                var modelStream = new StreamWriter(Path.Combine(path, modelName + ".model"));
-                var schemaStream = new StreamWriter(Path.Combine(path, modelName + ".input"));
-                var optionsStream = new StreamWriter(Path.Combine(path, modelName + ".options"));
-
-                serializer.Serialize(modelStream, _model);
-                serializer.Serialize(schemaStream, InputSchema);
-                serializer.Serialize(optionsStream, _options);
-
-                schemaStream.Dispose();
-                optionsStream.Dispose();
             }
             catch (Exception ex)
             {

@@ -297,5 +297,17 @@ namespace AlgorithmExtensions.Tests
 
             Assert.Throws<IncorrectDimensionsException>(() => resnet.Fit(data));
         }
+
+        [Fact]
+        public void Save_ResNet_ShouldSucceed()
+        {
+            var mlContext = new MLContext();
+
+            var data = GetInputData(mlContext, CorrectSDNET);
+            var resnet = GetResnet(mlContext).Fit(data);
+
+            resnet.Save("model", "resnet");
+            Assert.True(Directory.Exists(Path.Combine("model", "resnet")));
+        }
     }
 }
