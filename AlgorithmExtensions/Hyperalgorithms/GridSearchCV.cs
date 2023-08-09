@@ -18,6 +18,7 @@ namespace AlgorithmExtensions.Hyperalgorithms
         private int _crossValidationSplits;
         private MLContext _mlContext;
         private bool _maximize;
+        private bool _multipleThreads;
 
         private const string _checkParametersParametersNotGivenError = "No parameters were given to {0}";
         private const string _creationalDelegateError = "Creational delegate with name {0} did not create any type of estimator or default parameters given were incorrect.";
@@ -40,7 +41,7 @@ namespace AlgorithmExtensions.Hyperalgorithms
         /// <param name="scoringFunction">Scoring function to be used for scoring the models.</param>
         /// <param name="crossValidationSplits">Number of splits for cross-validation.</param>
         /// <param name="maximize">True if maximizing scoring function, otherwise false.</param>
-        public GridSearchCV(MLContext mlContext, PipelineTemplate template, ParameterProviderForModel parameters, IScoringFunction scoringFunction, int crossValidationSplits = 5, bool maximize = true)
+        public GridSearchCV(MLContext mlContext, PipelineTemplate template, ParameterProviderForModel parameters, IScoringFunction scoringFunction, int crossValidationSplits = 5, bool maximize = true, bool multipleThreads = true)
         {
             _template = template;
             _parameters = parameters;
@@ -48,6 +49,7 @@ namespace AlgorithmExtensions.Hyperalgorithms
             _mlContext = mlContext;
             _crossValidationSplits = crossValidationSplits;
             _maximize = maximize;
+            _multipleThreads = multipleThreads;
         }
 
         /// <summary>
@@ -62,6 +64,18 @@ namespace AlgorithmExtensions.Hyperalgorithms
             CheckParameters();
             CheckParameterUniqueness();
 
+            if (_multipleThreads)
+            {
+                await FitMultipleThreads(data);
+            }
+            else
+            {
+                FitSingleThread(data);
+            }
+        }
+
+        private async Task FitMultipleThreads(IDataView data)
+        {
             var pipelines = GenerateParameterCombinations().ToArray();
             var tasks = new Task<float>[pipelines.Length];
 
@@ -72,6 +86,28 @@ namespace AlgorithmExtensions.Hyperalgorithms
             }
 
             var results = await Task.WhenAll(tasks);
+
+            var bestValue = _maximize ? results.Max() : results.Min();
+            var bestEstimator = 0;
+            while (bestValue != results[bestEstimator])
+            {
+                bestEstimator++;
+            }
+
+            BestEstimator = GenerateEstimatorChain(pipelines[bestEstimator]).Fit(data);
+            BestParameters = pipelines[bestEstimator];
+        }
+
+        private void FitSingleThread(IDataView data)
+        {
+            var pipelines = GenerateParameterCombinations().ToArray();
+            var results = new float[pipelines.Length];
+
+            for (int i = 0; i < pipelines.Length; i++)
+            {
+                var pipeline = pipelines[i];
+                results[i] = CrossValidateModel(pipeline, data);
+            }
 
             var bestValue = _maximize ? results.Max() : results.Min();
             var bestEstimator = 0;

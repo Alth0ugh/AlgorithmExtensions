@@ -2,7 +2,6 @@
 using AlgorithmExtensions.Extensions;
 using AlgorithmExtensions.ResNets;
 using Microsoft.ML;
-using System.Diagnostics;
 using System.Text;
 
 namespace AlgorithmExtensions.Tests
@@ -15,20 +14,14 @@ namespace AlgorithmExtensions.Tests
         public static IEnumerable<ImgData> LoadImagesFromDirectory(string folderParameter, bool useFolderNameAsLabel = true)
         {
             var folder = Path.GetFullPath(folderParameter);
-            //get all file paths from the subdirectories
             var files = Directory.GetFiles(folder, "*", searchOption:
             SearchOption.AllDirectories);
-            //iterate through each file
             foreach (var file in files)
             {
-                //Image Classification API supports .jpg and .png formats; check img formats
                 if ((Path.GetExtension(file) != ".jpg") &&
                  (Path.GetExtension(file) != ".png"))
                     continue;
-                //store filename in a variable, say ‘label’
                 var label = Path.GetFileName(file);
-                /* If the useFolderNameAsLabel parameter is set to true, then name 
-                   of parent directory of the image file is used as the label. Else label is expected to be the file name or a a prefix of the file name. */
                 if (useFolderNameAsLabel)
                     label = Directory.GetParent(file)!.Name;
                 else
@@ -42,7 +35,6 @@ namespace AlgorithmExtensions.Tests
                         }
                     }
                 }
-                //create a new instance of ImgData()
                 yield return new ImgData()
                 {
                     ImagePath = file,

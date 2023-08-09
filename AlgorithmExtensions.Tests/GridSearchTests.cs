@@ -6,7 +6,6 @@ using Microsoft.ML.Trainers;
 using Microsoft.ML.Trainers.LightGbm;
 using Microsoft.ML.Transforms.Text;
 using AlgorithmExtensions.Exceptions;
-using System.Diagnostics;
 using Microsoft.ML.Transforms;
 using static Microsoft.ML.Transforms.ValueToKeyMappingEstimator;
 using Microsoft.ML.Trainers.FastTree;
@@ -373,8 +372,6 @@ namespace AlgorithmExtensions.Tests
             var gridSeach = new GridSearchCV(mlContext, pipelineTemplate, parameters, new MeanSquareErrorScoringFunction<TaxiPrediction>(mlContext));
 
             await gridSeach.Fit(dataView);
-            //var evaluation = mlContext.Regression.Evaluate(prediction);
-            //Debug.WriteLine("");
         }
 
         [Fact]
@@ -387,10 +384,10 @@ namespace AlgorithmExtensions.Tests
             pipelineTemplate.Add(mlContext.MulticlassClassification.Trainers.ResNetClassificator, "resnet", new Options() { LabelColumnName = "LabelKey", Height = 256, Width = 256 });
 
             var parameters = new ParameterProviderForModel();
-            parameters.Add("resnet", new ConstantParameterProvider(nameof(Options.Epochs), 1));
+            parameters.Add("resnet", new ConstantParameterProvider(nameof(Options.Epochs), 1, 3));
 
-            var gridSeach = new GridSearchCV(mlContext, pipelineTemplate, parameters, new AccuracyScoringFunction<ResNetPrediction>(mlContext));
-            await gridSeach.Fit(dataView);
+            var gridSearch = new GridSearchCV(mlContext, pipelineTemplate, parameters, new AccuracyScoringFunction<ResNetPrediction>(mlContext), multipleThreads: false);
+            await gridSearch.Fit(dataView);
         }
     }
 }
