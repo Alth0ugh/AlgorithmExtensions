@@ -318,7 +318,7 @@ namespace AlgorithmExtensions.Tests
         public async Task Fit_GridSearchMulticlassClassification_ShouldSucceed()
         {
             var mlContext = new MLContext();
-            var data = mlContext.Data.LoadFromTextFile<GihubIssue>(@"C:\Users\Oliver\Desktop\issues.tsv", hasHeader: true);
+            var data = mlContext.Data.LoadFromTextFile<GihubIssue>(@"..\..\..\TestData\issues.tsv", hasHeader: true);
 
             var pipelineTemplate = new PipelineTemplate();
 
